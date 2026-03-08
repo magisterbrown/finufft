@@ -10,6 +10,7 @@
 
 #include <finufft/plan.hpp>
 #include <finufft/utils.hpp>
+#include <finufft/heuristics.hpp>
 #include <finufft/spreadinterp.hpp>
 #include <finufft_common/kernel.h>
 #include <finufft_common/utils.h>
@@ -172,6 +173,16 @@ template<typename TF> void FINUFFT_PLAN_T<TF>::setup_spreadinterp() {
               "%s error: at upsampfac=%.3g, tol=%.3g would need kernel "
               "width ns=%d, exceeding max %d.\n",
               __func__, m.spopts.upsampfac, (double)m.tol, ns, MAX_NSPREAD);
+      throw finufft::exception(FINUFFT_ERR_EPS_TOO_SMALL);
+    }
+  } 
+  if(auto estimator = finufft::heuristics::get_estimator<TF>(type, dim)) {
+    auto sigma = estimator->get().best_sigma((double)m.tol);
+    if(!opts.allow_eps_too_small && sigma > m.spopts.upsampfac) {
+      fprintf(stderr,
+              "%s waring: tol=%.3g is not achievable at upsampfac=%.3g. "
+              "Increase upsampfac to %.3g=\n",
+              __func__, (double)m.tol, m.spopts.upsampfac, sigma);
       throw finufft::exception(FINUFFT_ERR_EPS_TOO_SMALL);
     }
   }
