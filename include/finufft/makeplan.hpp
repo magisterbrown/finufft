@@ -107,6 +107,69 @@ void FINUFFT_PLAN_T<TF>::onedim_fseries_kernel(BIGINT nf,
     }
   }
 }
+namespace {
+static const double MINSIGMA = 1.0;
+static const double MAXSIGMA = 2.0;
+template<size_t N> struct SigmaEstimator {
+public:
+  SigmaEstimator(int type, int dim, const double (&coeffs)[N], double lower_tol,
+                 double upper_tol)
+      : type(type), dim(dim), lower_tol(lower_tol), upper_tol(upper_tol) {
+    for (size_t i = 0; i < N; i++) coefficients[i] = coeffs[i];
+  }
+  bool match(int transform_type, int transform_dim) const {
+    return transform_type == type && transform_dim == dim;
+  };
+  double get_lower_bound(double tol) const {
+    if (tol < lower_tol) return MAXSIGMA;
+    if (tol < upper_tol) {
+      double mult = 1;
+      double res  = 0;
+      for (auto &c : coefficients) {
+        res += c * mult;
+        mult *= log(tol);
+      }
+      return res;
+    }
+    return MINSIGMA;
+  }
+
+private:
+  int type;
+  int dim;
+  std::array<double, N> coefficients;
+  double lower_tol;
+  double upper_tol;
+};
+
+static const SigmaEstimator<4> double_estimators[] = {
+    SigmaEstimator(1, 1, {23318.9549, 6252.4826, 558.6113, 16.6284}, 1.1633e-05,
+                   1.8391e-05),
+    SigmaEstimator(1, 2, {25408.1049, 6876.1352, 620.0672, 18.6307}, 1.1633e-05,
+                   2.0623e-05),
+    SigmaEstimator(1, 3, {382.3386, 99.8124, 8.5987, 0.2428}, 1.1633e-05, 4.5972e-05)};
+static const SigmaEstimator<4> float_estimators[] = {
+    SigmaEstimator(1, 1, {-16346.7086, -1596.1180, -51.9427, -0.5634}, 1.8435e-14,
+                   7.4421e-14),
+    SigmaEstimator(1, 2, {-47345.3513, -4580.8428, -147.7318, -1.5881}, 1.8435e-14,
+                   4.6738e-14),
+    SigmaEstimator(1, 3, {26656.4318, 2570.7517, 82.6242, 0.8849}, 2.3262e-14,
+                   5.8977e-14)};
+
+template<typename T> double get_sigma_lower_bound(int dim, int type, double tol) {
+  if constexpr (std::is_same_v<double, T>) {
+    for (auto &est : double_estimators) {
+      if (est.match(dim, type)) return est.get_lower_bound(tol);
+    }
+  }
+  if constexpr (std::is_same_v<float, T>) {
+    for (auto &est : double_estimators) {
+      if (est.match(dim, type)) return est.get_lower_bound(tol);
+    }
+  }
+  return MINSIGMA;
+}
+} // namespace
 
 // --------------- makeplan-related member functions and free functions ----------
 
@@ -186,6 +249,15 @@ template<typename TF> void FINUFFT_PLAN_T<TF>::setup_spreadinterp() {
                 "catastrophic cancellation.\n",
                 __func__, ns, max_ns_CC);
       ns = max_ns_CC;
+    }
+  }
+  if (!opts.allow_eps_too_small) {
+    double lowest_sigma = get_sigma_lower_bound<TF>(dim, type, (double)m.tol);
+    if (lowest_sigma > m.spopts.upsampfac) {
+      fprintf(stderr,
+              "%s waring: tol=%.3g is not achievable at upsampfac=%.3g. "
+              "Increase upsampfac to %.3g=\n",
+              __func__, (double)m.tol, m.spopts.upsampfac, lowest_sigma);
     }
   }
   m.spopts.nspread = ns;
