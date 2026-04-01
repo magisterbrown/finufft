@@ -44,7 +44,7 @@ struct train_options_t {
     options_map["N"]          = "300";
     options_map["M"]          = "5000";
     options_map["sigma-prec"] = "1e-5";
-    options_map["ntol"]       = "100";
+    options_map["ntol"]       = "200";
     // clang-format off
         static struct option long_options[] {
             {"dim", required_argument, 0, 0},

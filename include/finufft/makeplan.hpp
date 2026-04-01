@@ -5,6 +5,7 @@
 #include <complex>
 #include <cstdio>
 #include <limits>
+#include <optional>
 #include <type_traits>
 #include <vector>
 
@@ -133,6 +134,7 @@ public:
     }
     return MINSIGMA;
   }
+  double get_lowest_tol() { return lower_tol; }
 
 private:
   int type;
@@ -156,18 +158,18 @@ static const SigmaEstimator<4> float_estimators[] = {
     SigmaEstimator(1, 3, {26656.4318, 2570.7517, 82.6242, 0.8849}, 2.3262e-14,
                    5.8977e-14)};
 
-template<typename T> double get_sigma_lower_bound(int dim, int type, double tol) {
+template<typename T> std::optional<SigmaEstimator<4>> get_estimator(int dim, int type) {
   if constexpr (std::is_same_v<double, T>) {
     for (auto &est : double_estimators) {
-      if (est.match(dim, type)) return est.get_lower_bound(tol);
+      if (est.match(dim, type)) return est;
     }
   }
   if constexpr (std::is_same_v<float, T>) {
     for (auto &est : double_estimators) {
-      if (est.match(dim, type)) return est.get_lower_bound(tol);
+      if (est.match(dim, type)) return est;
     }
   }
-  return MINSIGMA;
+  return {};
 }
 } // namespace
 
@@ -251,13 +253,25 @@ template<typename TF> void FINUFFT_PLAN_T<TF>::setup_spreadinterp() {
       ns = max_ns_CC;
     }
   }
+
   if (!opts.allow_eps_too_small) {
-    double lowest_sigma = get_sigma_lower_bound<TF>(dim, type, (double)m.tol);
-    if (lowest_sigma > m.spopts.upsampfac) {
-      fprintf(stderr,
-              "%s waring: tol=%.3g is not achievable at upsampfac=%.3g. "
-              "Increase upsampfac to %.3g=\n",
-              __func__, (double)m.tol, m.spopts.upsampfac, lowest_sigma);
+    if (auto e = get_estimator<TF>(dim, type)) {
+      auto est = *e;
+      if ((double)m.tol < est.get_lowest_tol()) {
+        fprintf(stderr,
+                "%s waring: tol=%.3g is not achievable. "
+                "Increase tol>=%.3g\n",
+                __func__, (double)m.tol, est.get_lowest_tol());
+        throw finufft::exception(FINUFFT_ERR_EPS_TOO_SMALL);
+      }
+      auto lowest_sigma = est.get_lower_bound(m.tol);
+      if (lowest_sigma > m.spopts.upsampfac) {
+        fprintf(stderr,
+                "%s waring: tol=%.3g is not achievable at upsampfac=%.3g. "
+                "Increase upsampfac to %.3g=\n",
+                __func__, (double)m.tol, m.spopts.upsampfac, lowest_sigma);
+        throw finufft::exception(FINUFFT_ERR_EPS_TOO_SMALL);
+      }
     }
   }
   m.spopts.nspread = ns;
