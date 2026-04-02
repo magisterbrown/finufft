@@ -104,7 +104,7 @@ double lowest_sigma(double tol, int type, int dim, int maxns, int kerformula) {
 template<typename T> void train(train_options_t &cmd_opts) {
   pair<double, double> sigma_bounds = {1.0, 2.0};
   double limit                      = static_cast<double>(numeric_limits<T>::epsilon());
-  vector<double> tol_range = log_scale(limit, min(1e-2, limit * 1e10), cmd_opts.ntol);
+  vector<double> tol_range = log_scale(limit, min(1e-2, limit * 1e6), cmd_opts.ntol);
   int64_t N[3];
   const int n_transf  = 1;
   constexpr int iflag = 1;
@@ -213,21 +213,20 @@ template<typename T> void train(train_options_t &cmd_opts) {
       if (tol_x.size() < 2) continue;
       double lower_tol = tol_x.front();
       double upper_tol = tol_x.back();
+      vector<double> ups_y(sigmas.begin() + lowest_tol_idx, sigmas.end());
       transform(tol_x.begin(), tol_x.end(), tol_x.begin(),
                 [=](double tol) { return log(tol); });
-      vector<double> ups_y(sigmas.begin() + lowest_tol_idx, sigmas.end());
       auto polynomial = andviane::polynomial_regression<3>(tol_x, ups_y);
       vector<double> coeffs(polynomial.begin(), polynomial.end());
 
       cout << "SigmaEstimator{ type: " << type << ", n_dims: " << n_dims
-           << ", maxns: " << maxns << ", polynomial_coefficients: [";
+           << ", maxns: " << maxns << ", polynomial_coefficients: {";
       for (size_t i = 0; i < coeffs.size(); ++i) {
         if (i > 0) cout << ", ";
-        cout << std::fixed << std::setprecision(4) << coeffs[i];
+        cout << std::fixed << std::setprecision(10) << coeffs[i];
       }
-      cout << "], lower_tol: " << std::scientific << lower_tol
-           << ", upper_tol: " << std::scientific << upper_tol
-           << ", type: " << typeid(T).name() << " }\n";
+      cout << "}, " << std::scientific << lower_tol << ", " << std::scientific
+           << upper_tol << ", type: " << typeid(T).name() << " }\n";
     }
   }
 }
