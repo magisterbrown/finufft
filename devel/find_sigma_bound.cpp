@@ -161,7 +161,10 @@ template<typename T> void train(train_options_t &cmd_opts) {
       }
       vector<double> sigmas;
       int lowest_tol_idx = 0;
+      int upper_tol_idx  = -1;
+      int idx            = -1;
       for (auto &tol : tol_range) {
+        idx++;
         double comp_sigma  = lowest_sigma(tol, type, n_dims, maxns, 8);
         double sigma_lower = min(sigma_upper, comp_sigma);
         while (sigma_upper - sigma_lower > cmd_opts.sigma_prec) {
@@ -202,18 +205,21 @@ template<typename T> void train(train_options_t &cmd_opts) {
             sigma_lower = opts.upsampfac;
         }
         sigmas.push_back(sigma_upper);
-        if (sigma_upper == sigma_bounds.second) lowest_tol_idx++;
+        if (sigma_upper == sigma_bounds.second) {
+          lowest_tol_idx = max(0, idx);
+        }
         if (sigma_upper < sigma_bounds.second &&
-            sigma_upper < comp_sigma + cmd_opts.sigma_prec)
+            sigma_upper < comp_sigma + cmd_opts.sigma_prec) {
+          upper_tol_idx = upper_tol_idx == -1 ? idx : upper_tol_idx;
           break;
+        }
       }
-      if (lowest_tol_idx > 0) lowest_tol_idx--;
+      upper_tol_idx = upper_tol_idx == -1 ? idx : upper_tol_idx;
       vector<double> tol_x(tol_range.begin() + lowest_tol_idx,
-                           tol_range.begin() + sigmas.size());
+                           tol_range.begin() + upper_tol_idx + 1);
       if (tol_x.size() < 2) continue;
-      double lower_tol = tol_x.front();
-      double upper_tol = tol_x.back();
-      vector<double> ups_y(sigmas.begin() + lowest_tol_idx, sigmas.end());
+      vector<double> ups_y(sigmas.begin() + lowest_tol_idx,
+                           sigmas.begin() + upper_tol_idx + 1);
       transform(tol_x.begin(), tol_x.end(), tol_x.begin(),
                 [=](double tol) { return log(tol); });
       auto polynomial = andviane::polynomial_regression<3>(tol_x, ups_y);
@@ -225,8 +231,9 @@ template<typename T> void train(train_options_t &cmd_opts) {
         if (i > 0) cout << ", ";
         cout << std::fixed << std::setprecision(10) << coeffs[i];
       }
-      cout << "}, " << std::scientific << lower_tol << ", " << std::scientific
-           << upper_tol << ", type: " << typeid(T).name() << " }\n";
+      cout << "}, " << std::scientific << tol_range[lowest_tol_idx] << ", "
+           << std::scientific << tol_range[upper_tol_idx]
+           << ", type: " << typeid(T).name() << " }\n";
     }
   }
 }
