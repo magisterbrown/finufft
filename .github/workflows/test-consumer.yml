@@ -1,0 +1,23 @@
+name: Test Consumer
+
+on:
+  workflow_run:
+    workflows: ["Test Producer"]
+    types:
+      - completed
+
+jobs:
+  consume:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: test-artifact
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print artifact content
+        run: |
+          echo "Artifact content retrieved:"
+          cat test_data.txt
