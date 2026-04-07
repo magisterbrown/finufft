@@ -2,7 +2,7 @@ name: Test Consumer
 
 on:
   workflow_run:
-    workflows: ["Test Producer"]
+    workflows: ["Build and test finufft Python wheels"]
     types:
       - completed
 
@@ -13,11 +13,11 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: test-artifact
+          name: finufft-wheels-manylinux_x86_64
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print artifact content
         run: |
           echo "Artifact content retrieved:"
-          cat test_data.txt
+          ls
