@@ -1,0 +1,48 @@
+name: Perf wheel
+
+on:
+  workflow_dispatch:
+
+
+jobs:
+  consume:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: finufft-wheels-manylinux_x86_64
+          github-token: ${{ github.token }}
+          run-id:  24074274002
+          path: ./artifacts
+
+      - name: Install finufft from artifact
+        run: |
+          pip install --upgrade pip
+          pip install ./artifacts/finufft-2.6.0.dev0-py3-none-manylinux_2_28_x86_64.whl
+          pip install pandas
+          pip install matplotlib
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run and commit perftest 
+        run: |
+          # Perftest only commits that edit source code.
+          if git diff-tree --no-commit-id --name-only -r HEAD -- perftest/perftest_results.csv | grep -q .; then
+            exit 0
+          fi
+          python perftest/perftest.py $(git rev-parse --short HEAD) perftest/perftest_results.csv --plot_path docs/pics/perftest_timings.png
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add perftest/perftest_results.csv
+          git add docs/pics/perftest_timings.png
+          git commit -m "Perftest results"
+          git push
