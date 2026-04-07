@@ -1,10 +1,8 @@
 name: Test Consumer
 
 on:
-  workflow_run:
-    workflows: ["Build and test finufft Python wheels"]
-    types:
-      - completed
+  workflow_dispatch:
+
 
 jobs:
   consume:
