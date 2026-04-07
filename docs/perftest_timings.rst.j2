@@ -1,0 +1,26 @@
+.. _perftest_timings:
+
+Performance test timings
+========================
+
+This page compares performance of every FINUFFT release version and latest commit on master.
+
+{% for dim, transform_groups in dim_transform_groups.items() %}
+{{ dim }}D Transforms
+---------------------------------------------
+
+{% for group, images in transform_groups.items() %}
+Type {{ group }}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+{% for image in images %}
+Parameters: ``{{ image.params }}``
+
+.. image:: {{ image.path }}
+   :alt: {{ image.path }}
+   :width: 100%
+
+{% endfor %}
+{% endfor %}
+{% endfor %}
+
