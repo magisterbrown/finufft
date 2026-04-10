@@ -30,3 +30,23 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install ./artifacts/finufft-2.6.0.dev0-py3-none-manylinux_2_28_x86_64.whl
+          pip install pandas
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run perftest
+        run: |
+          python perftest/perftest.py $(git rev-parse --short HEAD) perftest_results.csv
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+      - name: Commit and push perftest results
+        run: |
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            git add perftest_results.csv
+            git commit -m "perf: Add perftest results for" 
+            git push
