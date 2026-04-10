@@ -47,7 +47,6 @@ jobs:
           python perftest/perftest.py $(git rev-parse --short HEAD) perftest_results.csv
 
       - name: Configure git
-        if: steps.check_tag.outputs.has_perf_tag == 'false'
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
