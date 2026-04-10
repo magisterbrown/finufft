@@ -56,5 +56,4 @@ jobs:
           git add perftest_results.csv
           git commit -m "Add perftest results for"
           git tag "perf"
-          git push
           git push --tags
