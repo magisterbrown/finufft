@@ -1,7 +1,9 @@
 name: Test Consumer
 
 on:
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["Test Producer"]
+    types: [completed]
 
 
 jobs:
@@ -11,7 +13,9 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          artifact-ids: 6366993023
+          name: test-artifact
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
           path: ./artifacts
 
       - name: Print artifact content
