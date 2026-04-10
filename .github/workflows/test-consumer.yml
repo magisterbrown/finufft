@@ -12,8 +12,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: finufft-wheels-manylinux_x86_64
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./artifacts
 
       - name: Print artifact content
         run: |
