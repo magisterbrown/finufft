@@ -2,6 +2,10 @@ name: Test Consumer
 
 on:
   workflow_run:
+    workflows: ["Test Producer"]
+    types: [completed]
+  workflow_dispatch:
+
 
 jobs:
   consume:
