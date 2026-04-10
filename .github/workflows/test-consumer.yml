@@ -8,6 +8,14 @@ jobs:
   consume:
     runs-on: ubuntu-latest
     steps:
+
+      - name: Check if commit already has perf tag
+        id: check_tag
+        run: |
+          if git tag --points-at HEAD | grep -q "perf"; then
+            exit 0
+          fi
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -21,11 +29,6 @@ jobs:
           run-id:  24074274002
           path: ./artifacts
 
-      - name: Print artifact content
-        run: |
-          echo "Artifact content retrieved:"
-          ls -la ./artifacts
-
       - name: Install finufft from artifact
         run: |
           pip install --upgrade pip
@@ -34,19 +37,25 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
 
       - name: Run perftest
+        if: steps.check_tag.outputs.has_perf_tag == 'false'
         run: |
           python perftest/perftest.py $(git rev-parse --short HEAD) perftest_results.csv
 
       - name: Configure git
+        if: steps.check_tag.outputs.has_perf_tag == 'false'
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
       - name: Commit and push perftest results
         run: |
-            SHORT_SHA=$(git rev-parse --short HEAD)
-            git add perftest_results.csv
-            git commit -m "perf: Add perftest results for" 
-            git push
+          git add perftest_results.csv
+          git commit -m "Add perftest results for"
+          git tag "perf"
+          git push
+          git push --tags
