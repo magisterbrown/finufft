@@ -8,6 +8,11 @@ jobs:
   consume:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
@@ -19,4 +24,9 @@ jobs:
       - name: Print artifact content
         run: |
           echo "Artifact content retrieved:"
-          ls
+          ls -la ./artifacts
+
+      - name: Install finufft from artifact
+        run: |
+          pip install --upgrade pip
+          pip install ./artifacts/finufft-2.6.0.dev0-py3-none-manylinux_2_28_x86_64.whl
