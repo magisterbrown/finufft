@@ -1,9 +1,6 @@
 name: Test Consumer
 
 on:
-  workflow_run:
-    workflows: ["Test Producer"]
-    types: [completed]
   workflow_dispatch:
 
 
@@ -16,7 +13,7 @@ jobs:
         with:
           name: test-artifact
           github-token: ${{ github.token }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: 24234105172
           path: ./artifacts
 
       - name: Print artifact content
