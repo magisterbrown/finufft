@@ -1,0 +1,52 @@
+name: checkout tagged commits
+
+on:
+  workflow_dispatch:
+
+jobs:
+  prepare-tags:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.collect.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Collect tags oldest to newest
+        id: collect
+        shell: bash
+        run: |
+          mapfile -t tags < <(git for-each-ref --sort=creatordate --format='%(refname:short)' "refs/tags/v*")
+
+
+          matrix_json="$(
+            printf '%s\n' "${tags[@]}" \
+              | python3 -c 'import json,sys; tags=[x.strip() for x in sys.stdin if x.strip()]; print(json.dumps({"include":[{"tag":t} for t in tags]}))'
+          )"
+
+          echo "matrix=${matrix_json}" >> "$GITHUB_OUTPUT"
+
+  checkout-tags:
+    runs-on: ubuntu-22.04
+    needs: prepare-tags
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare-tags.outputs.matrix) }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.tag }}
+          fetch-depth: 1
+
+      - name: Show checked out revision
+        run: |
+          echo "Tag: ${{ matrix.tag }}"
+          echo "Commit: $(git rev-parse HEAD)"
