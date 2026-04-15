@@ -57,6 +57,23 @@ jobs:
         run: |
           mv _main_ref/perftest ./perftest
 
+      - name: Create cache directory
+        run: mkdir -p cpm
+
+      - name: Restore Cache
+        id: cpm-cache
+        uses: actions/cache/restore@v4
+        with:
+          key: cpm-cache-00-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}
+          path: cpm
+
+      - name: Restore perftest binary
+        id: perftest-cache
+        uses: actions/cache/restore@v4
+        with:
+          key: perftest-bin-00-${{ matrix.commit }}-${{ hashFiles('perftest/**') }}
+          path: build/perftest/perftest
+
 
       - name: Setup Cpp
         uses: aminya/setup-cpp@v1
@@ -66,10 +83,25 @@ jobs:
       - name: Run test script from main
         id: run_test
         run: |
-          cmake -B build -DFINUFFT_BUILD_TESTS=ON && cmake --build build --target perftest -j
-          ls perftest
-          echo "Tag: ${{ matrix.tag }}"
-          echo "Commit: ${{ matrix.commit }}"
+          if [ "${{ steps.perftest-cache.outputs.cache-hit }}" != "true" ] || [ ! -x build/perftest/perftest ]; then
+            cmake -B build -DFINUFFT_BUILD_TESTS=ON -DCPM_SOURCE_CACHE="cpm"
+            cmake --build build --target perftest -j
+          fi
+          python3 perftest/run_perftest_matrix.py --perftest-bin ./build/perftest/perftest
+
+      - name: Cache dependencies
+        if: steps.cpm-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: cpm-cache-00-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}
+          path: cpm
+
+      - name: Cache perftest binary
+        if: steps.perftest-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: perftest-bin-00-${{ matrix.commit }}-${{ hashFiles('perftest/**') }}
+          path: build/perftest/perftest
 
       - name: Save matrix result
         if: always()
