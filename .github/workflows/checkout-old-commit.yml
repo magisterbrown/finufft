@@ -14,6 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
           fetch-tags: true
 
@@ -21,15 +22,10 @@ jobs:
         id: collect
         shell: bash
         run: |
-          mapfile -t tags < <(git for-each-ref --sort=creatordate --format='%(refname:short)' "refs/tags/v*")
-
-
-          matrix_json="$(
-            printf '%s\n' "${tags[@]}" \
-              | python3 -c 'import json,sys; tags=[x.strip() for x in sys.stdin if x.strip()]; print(json.dumps({"include":[{"tag":t} for t in tags]}))'
-          )"
-
-          echo "matrix=${matrix_json}" >> "$GITHUB_OUTPUT"
+          git for-each-ref --sort=creatordate --format='%(refname:short) %(objectname)' "refs/tags/v*" --exclude='refs/tags/*-*'  \
+              | tail -n 2 \
+              | python3 -c 'import json;import sys; print("matrix="+json.dumps({"include": [{"tag": tag, "commit": sha} for tag, sha in [p.split() for p in sys.stdin]+[("master", "master")]]}))' \
+                >> $GITHUB_OUTPUT
 
   checkout-tags:
     runs-on: ubuntu-22.04
@@ -40,13 +36,24 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout tag
+      - name: Checkout tag commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ matrix.tag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ matrix.commit }}
           fetch-depth: 1
 
-      - name: Show checked out revision
+      - name: Checkout perftest folder from main
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: master
+          fetch-depth: 1
+          sparse-checkout: |
+            perftest
+
+      - name: Run test script from main
         run: |
           echo "Tag: ${{ matrix.tag }}"
-          echo "Commit: $(git rev-parse HEAD)"
+          echo "Commit: ${{ matrix.commit }}"
+          ls
