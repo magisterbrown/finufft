@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          ref: master
+          ref: perf-push
           fetch-depth: 1
           path: _main_ref
           sparse-checkout: |

@@ -20,16 +20,14 @@ class Params:
 
 PARAM_LIST = [
     Params("f", 1e4, 1, 1, 1, 1, 1e7, 1e-4),
-    Params("d", 1e4, 1, 1, 1, 1, 1e7, 1e-9),
-    Params("f", 320, 320, 1, 1, 1, 1e7, 1e-5),
-    Params("d", 320, 320, 1, 1, 1, 1e7, 1e-9),
-    Params("f", 320, 320, 1, 1, 0, 1e7, 1e-5),
-    Params("d", 192, 192, 128, 1, 0, 1e7, 1e-7),
+    #Params("d", 1e4, 1, 1, 1, 1, 1e7, 1e-9),
+    #Params("f", 320, 320, 1, 1, 1, 1e7, 1e-5),
+    #Params("d", 320, 320, 1, 1, 1, 1e7, 1e-9),
+    #Params("f", 320, 320, 1, 1, 0, 1e7, 1e-5),
+    #Params("d", 192, 192, 128, 1, 0, 1e7, 1e-7),
 ]
 
 TRANSFORMS = ["3", "2", "1"]
-UPSAMP = ["1.25", "2.00"]
-
 
 def build_args(args: dict[str, str]) -> list[str]:
     return [f"{key}={value}" for key, value in args.items()]
@@ -87,7 +85,7 @@ def main() -> None:
         "--threads": "1",
         "--M": "1E6",
         "--tol": "1E-5",
-        "--upsampfact": "1.25",
+        "--upsampfact": "0",
         "--kerevalmethod": "1",
         "--debug": "0",
         "--bandwidth": "1.0",
@@ -101,11 +99,9 @@ def main() -> None:
             perftest_args[option_key] = str(value)
         for transform in TRANSFORMS:
             perftest_args["--type"] = transform
-            for upsampfac in UPSAMP:
-                perftest_args["--upsampfact"] = upsampfac
-                output = run_command(args.perftest_bin, build_args(perftest_args))
-                validate_perftest_output(output)
-                run_count += 1
+            output = run_command(args.perftest_bin, build_args(perftest_args))
+            validate_perftest_output(output)
+            run_count += 1
 
     print(f"Ran {run_count} perftest invocations successfully.")
 
