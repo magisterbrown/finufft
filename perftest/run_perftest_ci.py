@@ -109,6 +109,7 @@ def gather_results(args) -> None:
         try:
             frame = pd.read_csv(base_dir / f"{tag}.csv")
         except pd.errors.EmptyDataError:
+            print(f"Skipped version {tag}")
             continue
         frame["tag"] = tag
         frames.append(frame)

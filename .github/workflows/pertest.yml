@@ -142,7 +142,7 @@ jobs:
         run: |
           echo "Matrix JSON from prepare-tags:"
           echo '${{ needs.prepare-tags.outputs.matrix }}'
-          rm -f docs/pics/perftestci*
+          rm -f docs/pics/perftestci_*
           CPU=$(grep 'model name' /proc/cpuinfo | head -n 1)
           CPU_FLAGS=$(grep 'flags' /proc/cpuinfo | head -n 1)
           python3 perftest/run_perftest_ci.py gather \
@@ -160,7 +160,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@github.com"
-          git checkout --orphan perftest-results
+          git checkout perftest-results
           git add docs/pics/perftestci_* docs/perftest_timings.rst
           git diff --staged --quiet ||
           git commit -m "Generated new perftest report page. [skip ci]" &&
