@@ -8,12 +8,12 @@ on:
       versions:
         description: "Comma separated version list"
         type: string
-        default: 'v2.2.0,v2.3.0,v2.4.0,v2.5.0'
+        default: 'v2.4.0,v2.5.0'
         required: true
 
 jobs:
   prepare-tags:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     env:
       VERSIONS_INPUT: ${{ github.event.inputs.versions || 'v2.4.0,v2.5.0' }}
     permissions:
@@ -38,7 +38,7 @@ jobs:
           echo $RESULT >> $GITHUB_OUTPUT
 
   checkout-tags:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     needs: prepare-tags
     strategy:
       fail-fast: false
@@ -116,7 +116,7 @@ jobs:
           if-no-files-found: error
 
   gather-results:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     needs:
       - prepare-tags
       - checkout-tags
