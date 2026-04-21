@@ -33,6 +33,7 @@ jobs:
         shell: bash
         run: |
           VERSIONS=$(echo $VERSIONS_INPUT | tr ',' '\n' |  xargs -I? sh -c "echo -n '?:';git rev-parse ?")
+
           #VERSIONS="$VERSIONS master:$(git rev-parse master)"
           RESULT=$(echo $VERSIONS | python3 -c 'import json;import sys; print("matrix="+json.dumps({"include": [{"tag": tag, "commit": sha} for tag, sha in [p.split(":") for p in next(sys.stdin).split()]]}))')
           echo $RESULT >> $GITHUB_OUTPUT
