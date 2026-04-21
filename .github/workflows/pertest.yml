@@ -162,5 +162,6 @@ jobs:
           git config user.email "github-actions[bot]@github.com"
           git checkout --orphan perftest-results
           git add docs/pics/perftestci_* docs/perftest_timings.rst
-          git commit -m "Generated new perftest report page. [skip ci]"
+          git diff --staged --quiet ||
+          git commit -m "Generated new perftest report page. [skip ci]" &&
           git push -f https://${GITHUB_TOKEN}@github.com/${{ github.repository }} perftest-results
