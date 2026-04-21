@@ -160,8 +160,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@github.com"
-          git checkout perftest-results
-          git add docs/pics/perftestci_* docs/perftest_timings.rst
-          git diff --staged --quiet ||
-          git commit -m "Generated new perftest report page. [skip ci]" &&
-          git push -f https://${GITHUB_TOKEN}@github.com/${{ github.repository }} perftest-results
+          git checkout -B perftest-results
+          git add docs/pics docs/perftest_timings.rst
+          git diff --staged --quiet || git commit -m "Generated new perftest report page." && git push
