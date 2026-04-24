@@ -33,19 +33,14 @@ jobs:
         run: |
           mkdir -p ../builds
           if [ ! -d ../builds/master ]; then
-            git worktree add -f -d ../master origin/master
-            cmake -B ../builds/master -S -DFINUFFT_BUILD_TESTS=ON &&
+            cmake -B ../builds/master -DFINUFFT_BUILD_TESTS=ON &&
             cmake --build ../builds/master --target perftest -j
           fi
-          if [ ! -d ../builds/pr-head ]; then
-            git checkout "${{ github.event.pull_request.head.ref }}"
-            cmake -B ../builds/pr-head -S ../pr-head -DFINUFFT_BUILD_TESTS=ON &&
-            cmake --build ../builds/pr-head --target perftest -j
-          fi
+
           pip install pandas matplotlib
           python3 perftest/collect_dual_perftest.py \
             --master-perftest ../builds/master/perftest/perftest \
-            --pr-perftest ../builds/pr-head/perftest/perftest \
+            --pr-perftest ../builds/master/perftest/perftest \
             --output comment.md
 
           touch comment.md
