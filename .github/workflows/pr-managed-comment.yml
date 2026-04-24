@@ -45,7 +45,8 @@ jobs:
           pip install pandas matplotlib
           python3 perftest/collect_dual_perftest.py \
             --master-perftest ../builds/master/perftest/perftest \
-            --pr-perftest ../builds/pr-head/perftest/perftest
+            --pr-perftest ../builds/pr-head/perftest/perftest \
+            --output comment.md
 
 
       - name: Find existing managed comment

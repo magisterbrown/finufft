@@ -114,18 +114,18 @@ def main() -> None:
     body += perftest_summary
     Path(args.output).write_text(body, encoding="utf-8")
 
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.set_title("Perftest summary")
-    ax.set_xlabel("run")
-    ax.set_ylabel("value")
-    ax.text(
-        0.5, 0.5, "No plotted data", ha="center", va="center", transform=ax.transAxes
-    )
-    ax.set_xticks([])
-    ax.set_yticks([])
-    fig.tight_layout()
-    fig.savefig(args.plot_output, dpi=150)
-    plt.close(fig)
+    # fig, ax = plt.subplots(figsize=(6, 4))
+    # ax.set_title("Perftest summary")
+    # ax.set_xlabel("run")
+    # ax.set_ylabel("value")
+    # ax.text(
+    #     0.5, 0.5, "No plotted data", ha="center", va="center", transform=ax.transAxes
+    # )
+    # ax.set_xticks([])
+    # ax.set_yticks([])
+    # fig.tight_layout()
+    # fig.savefig(args.plot_output, dpi=150)
+    # plt.close(fig)
 
 
 if __name__ == "__main__":
