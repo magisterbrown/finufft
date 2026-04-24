@@ -38,8 +38,8 @@ jobs:
             cmake --build ../builds/master --target perftest -j
           fi
           if [ ! -d ../builds/pr-head ]; then
-            git checkout ${{ github.event.pull_request.head.ref }}
-            cmake -B ../builds/pr-head -DFINUFFT_BUILD_TESTS=ON &&
+            git checkout "${{ github.event.pull_request.head.ref }}"
+            cmake -B ../builds/pr-head -S ../pr-head -DFINUFFT_BUILD_TESTS=ON &&
             cmake --build ../builds/pr-head --target perftest -j
           fi
           pip install pandas matplotlib
