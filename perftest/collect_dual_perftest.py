@@ -6,6 +6,7 @@ from dataclasses import dataclass, fields
 from numbers import Number
 import io
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 @dataclass(frozen=True)
@@ -97,6 +98,9 @@ def main() -> None:
         "--master-perftest", default="../builds/master/perftest/perftest"
     )
     parser.add_argument("--pr-perftest", default="../builds/pr-head/perftest/perftest")
+    parser.add_argument("--output", default="comment.md")
+    parser.add_argument("--plot-output", default="comment-plot.png")
+
     args = parser.parse_args()
 
     perftest_summary = run_one_perftest(args.master_perftest) + run_one_perftest(
@@ -108,7 +112,20 @@ def main() -> None:
     body += f"Time now: {timestamp}\\n"
     body += "Perftest runs:\\n"
     body += perftest_summary
-    Path("comment.md").write_text(body, encoding="utf-8")
+    Path(args.output).write_text(body, encoding="utf-8")
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.set_title("Perftest summary")
+    ax.set_xlabel("run")
+    ax.set_ylabel("value")
+    ax.text(
+        0.5, 0.5, "No plotted data", ha="center", va="center", transform=ax.transAxes
+    )
+    ax.set_xticks([])
+    ax.set_yticks([])
+    fig.tight_layout()
+    fig.savefig(args.plot_output, dpi=150)
+    plt.close(fig)
 
 
 if __name__ == "__main__":

@@ -46,6 +46,13 @@ jobs:
             --master-perftest ../builds/master/perftest/perftest \
             --pr-perftest ../builds/pr-head/perftest/perftest
 
+      - name: Upload plot artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-managed-comment-plot
+          path: comment-plot.png
+
 
       - name: Find existing managed comment
         if: always()
