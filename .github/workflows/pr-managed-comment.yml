@@ -1,0 +1,74 @@
+name: PR managed comment
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  build-and-upsert-comment:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout latest code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Cpp
+        uses: aminya/setup-cpp@v1
+        with:
+          cmake: true
+
+      - name: Build latest master and PR head
+        id: build
+        continue-on-error: true
+        run: |
+          git fetch --no-tags --depth=1 origin master
+          git worktree add -f -d ../master origin/master
+
+          git fetch --no-tags --depth=1 "https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git" "${{ github.event.pull_request.head.ref }}"
+          git worktree add -f -d ../pr-head FETCH_HEAD
+
+          python3 perftest/collect_dual_perftest.py \
+            --master-source ../master \
+            --pr-source ../pr-head \
+            --builds-root ../builds \
+            --jobs 8 \
+            >> "$GITHUB_OUTPUT"
+
+
+      - name: Find existing managed comment
+        if: always()
+        id: find-comment
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: github-actions[bot]
+          body-includes: "<!-- pr-managed-comment -->"
+
+      - name: Create managed PR comment
+        if: always() && steps.find-comment.outputs.comment-id == ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.build.outputs.body }}
+
+      - name: Update managed PR comment
+        if: always() && steps.find-comment.outputs.comment-id != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+          body: ${{ steps.build.outputs.body }}
+
+      - name: Fail workflow if build failed
+        if: steps.build.outcome != 'success'
+        run: exit 1
