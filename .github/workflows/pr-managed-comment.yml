@@ -41,7 +41,6 @@ jobs:
             --master-source ../master \
             --pr-source ../pr-head \
             --builds-root ../builds \
-            --jobs 8 \
             >> "$GITHUB_OUTPUT"
 
 
