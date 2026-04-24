@@ -44,8 +44,7 @@ jobs:
           pip install pandas matplotlib
           python3 perftest/collect_dual_perftest.py \
             --master-perftest ../builds/master/perftest/perftest \
-            --pr-perftest ../builds/pr-head/perftest/perftest \
-            >> "$GITHUB_OUTPUT"
+            --pr-perftest ../builds/pr-head/perftest/perftest
 
 
       - name: Find existing managed comment
@@ -62,7 +61,7 @@ jobs:
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.build.outputs.body }}
+          body-path: comment.md
 
       - name: Update managed PR comment
         if: always() && steps.find-comment.outputs.comment-id != ''
@@ -70,4 +69,4 @@ jobs:
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
-          body: ${{ steps.build.outputs.body }}
+          body-path: comment.md

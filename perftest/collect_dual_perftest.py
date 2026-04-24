@@ -108,7 +108,7 @@ def main() -> None:
     body += f"Time now: {timestamp}\\n"
     body += "Perftest runs:\\n"
     body += perftest_summary
-    print(f"body={body}")
+    Path("comment.md").write_text(body, encoding="utf-8")
 
 
 if __name__ == "__main__":
