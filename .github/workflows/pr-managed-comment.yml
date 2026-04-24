@@ -48,6 +48,8 @@ jobs:
             --pr-perftest ../builds/pr-head/perftest/perftest \
             --output comment.md
 
+          touch comment.md
+
 
       - name: Find existing managed comment
         if: always()
