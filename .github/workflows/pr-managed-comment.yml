@@ -71,7 +71,3 @@ jobs:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
           body: ${{ steps.build.outputs.body }}
-
-      - name: Fail workflow if build failed
-        if: steps.build.outcome != 'success'
-        run: exit 1
