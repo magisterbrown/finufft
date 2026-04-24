@@ -43,9 +43,8 @@ jobs:
           fi
 
           python3 perftest/collect_dual_perftest.py \
-            --master-source ../master \
-            --pr-source ../pr-head \
-            --builds-root ../builds \
+            --master-perftest ../master/perftest/perftest \
+            --pr-perftest ../pr-head/perftest/perftest \
             >> "$GITHUB_OUTPUT"
 
 
