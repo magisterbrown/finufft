@@ -10,7 +10,7 @@ def main() -> None:
     parser.parse_args()
 
     timestamp = datetime.now().strftime("%a %d %b %Y %H:%M:%S %Z")
-    print(f"body=Time now: {timestamp}")
+    print(f"body=<!-- pr-managed-comment -->Time now: {timestamp}")
 
 
 if __name__ == "__main__":
