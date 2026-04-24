@@ -31,8 +31,15 @@ jobs:
         id: build
         continue-on-error: true
         run: |
+          mkdir -p ../builds
           if [ ! -d ../master ]; then
             git worktree add -f -d ../master origin/master
+            cmake -B ../builds/master -S ../master -DFINUFFT_BUILD_TESTS=ON &&
+            cmake --build ../builds/master --target perftest -j
+          fi
+          if [ ! -d ../builds/pr-head ]; then
+            cmake -B ../builds/pr-head -DFINUFFT_BUILD_TESTS=ON &&
+            cmake --build ../builds/pr-head --target perftest -j
           fi
 
           python3 perftest/collect_dual_perftest.py \
