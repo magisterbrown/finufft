@@ -41,7 +41,7 @@ jobs:
             cmake -B ../builds/pr-head -DFINUFFT_BUILD_TESTS=ON &&
             cmake --build ../builds/pr-head --target perftest -j
           fi
-
+          pip install pandas matplotlib
           python3 perftest/collect_dual_perftest.py \
             --master-perftest ../master/perftest/perftest \
             --pr-perftest ../pr-head/perftest/perftest \
