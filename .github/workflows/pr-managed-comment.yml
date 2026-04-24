@@ -43,8 +43,8 @@ jobs:
           fi
           pip install pandas matplotlib
           python3 perftest/collect_dual_perftest.py \
-            --master-perftest ../master/perftest/perftest \
-            --pr-perftest ../pr-head/perftest/perftest \
+            --master-perftest ../builds/master/perftest/perftest \
+            --pr-perftest ../builds/pr-head/perftest/perftest \
             >> "$GITHUB_OUTPUT"
 
 
