@@ -31,11 +31,9 @@ jobs:
         id: build
         continue-on-error: true
         run: |
-          git fetch --no-tags --depth=1 origin master
-          git worktree add -f -d ../master origin/master
-
-          git fetch --no-tags --depth=1 "https://github.com/${{ github.event.pull_request.head.repo.full_name }}.git" "${{ github.event.pull_request.head.ref }}"
-          git worktree add -f -d ../pr-head FETCH_HEAD
+          if [ ! -d ../master ]; then
+            git worktree add -f -d ../master origin/master
+          fi
 
           python3 perftest/collect_dual_perftest.py \
             --master-source ../master \
