@@ -62,11 +62,14 @@ def run_one_perftest(binary_path: str) -> str:
     res = ""
     for param in PARAM_LIST:
         for transform in TRANSFORMS:
-            result = subprocess.run(
+            cmd = (
                 [binary_path]
                 + param.args()
                 + DEFAULT_EXTRA_ARGS
-                + [f"type={transform}"],
+                + [f"type={transform}"]
+            )
+            result = subprocess.run(
+                cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -96,18 +99,15 @@ def main() -> None:
     parser.add_argument("--pr-perftest", default="../builds/pr-head/perftest/perftest")
     args = parser.parse_args()
 
-    perftest_summary = (
-        run_one_perftest(args.master_perftest)
-        + "\n"
-        + run_one_perftest(args.pr_perftest)
+    perftest_summary = run_one_perftest(args.master_perftest) + run_one_perftest(
+        args.pr_perftest
     )
 
     timestamp = datetime.now().strftime("%a %d %b %Y %H:%M:%S %Z")
     body = "<!-- pr-managed-comment -->\\n"
     body += f"Time now: {timestamp}\\n"
     body += "Perftest runs:\\n"
-    for line in perftest_summary:
-        body += f"- {line}\\n"
+    body += perftest_summary
     print(f"body={body}")
 
 
