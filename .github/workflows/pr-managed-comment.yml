@@ -36,8 +36,9 @@ jobs:
             cmake -B ../builds/master -DFINUFFT_BUILD_TESTS=ON &&
             cmake --build ../builds/master --target perftest -j
           fi
+          echo ${{ github.event.pull_request.head.ref }}
           if [ ! -d ../builds/pr-head ]; then
-            git worktree add -f -d ../pr-head {{ github.event.pull_request.head.ref }}
+            git worktree add -f -d ../pr-head ${{ github.event.pull_request.head.ref }}
             cmake -B ../builds/pr-head -S ../pr-head -DFINUFFT_BUILD_TESTS=ON &&
             cmake --build ../builds/pr-head --target perftest -j
           fi
