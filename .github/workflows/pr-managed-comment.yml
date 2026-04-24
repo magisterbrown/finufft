@@ -38,19 +38,19 @@ jobs:
         id: build
         continue-on-error: true
         run: |
-          mkdir -p ../builds
-          if [ ! -d ../builds/master ]; then
-            cmake -B ../builds/master -S master -DFINUFFT_BUILD_TESTS=ON &&
-            cmake --build ../builds/master --target perftest -j
+          mkdir -p builds
+          if [ ! -d builds/master ]; then
+            cmake -B builds/master -S master -DFINUFFT_BUILD_TESTS=ON &&
+            cmake --build builds/master --target perftest -j
           fi
-          if [ ! -d ../builds/pr-head ]; then
-            cmake -B ../builds/pr-head -S pr-head -DFINUFFT_BUILD_TESTS=ON &&
-            cmake --build ../builds/pr-head --target perftest -j
+          if [ ! -d builds/pr-head ]; then
+            cmake -B builds/pr-head -S pr-head -DFINUFFT_BUILD_TESTS=ON &&
+            cmake --build builds/pr-head --target perftest -j
           fi
           pip install pandas matplotlib
           python3 master/perftest/collect_dual_perftest.py \
-            --master-perftest ../builds/master/perftest/perftest \
-            --pr-perftest ../builds/pr-head/perftest/perftest \
+            --master-perftest builds/master/perftest/perftest \
+            --pr-perftest builds/pr-head/perftest/perftest \
             --output comment.md
 
           touch comment.md
