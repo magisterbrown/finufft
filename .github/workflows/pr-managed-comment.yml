@@ -33,7 +33,6 @@ jobs:
         run: |
           mkdir -p ../builds
           if [ ! -d ../builds/master ]; then
-            git checkout master
             cmake -B ../builds/master -DFINUFFT_BUILD_TESTS=ON &&
             cmake --build ../builds/master --target perftest -j
           fi
