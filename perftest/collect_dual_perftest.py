@@ -3,6 +3,7 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass, fields
+from numbers import Number
 import io
 import pandas as pd
 
