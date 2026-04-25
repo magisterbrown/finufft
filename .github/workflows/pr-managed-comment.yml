@@ -60,6 +60,7 @@ jobs:
             --plot-output perftest_comment_figure.png
 
       - name: Commit benchmark results
+        id: push-image
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
@@ -87,7 +88,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             <!-- pr-managed-comment -->
-            ${{ steps.build.outputs.image_sha }}
+            ${{ steps.push-image.outputs.image_sha }}
 
       - name: Update managed PR comment
         if: always() && steps.find-comment.outputs.comment-id != ''
@@ -97,4 +98,4 @@ jobs:
           edit-mode: replace
           body: |
             <!-- pr-managed-comment -->
-            ${{ steps.build.outputs.image_sha }}
+            ${{ steps.push-image.outputs.image_sha }}
