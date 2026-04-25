@@ -17,17 +17,25 @@ jobs:
       pull-requests: write
       issues: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Checkout latest master
         uses: actions/checkout@v4
         with:
           ref: 'master'
-          path: master
+          path: ../master
 
       - name: Checkout pr head
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          path: pr-head
+          path: ../pr-head
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
 
       - name: Setup Cpp
         uses: aminya/setup-cpp@v1
@@ -36,25 +44,34 @@ jobs:
 
       - name: Build latest master and PR head
         id: build
-        continue-on-error: true
         run: |
-          mkdir -p builds
-          if [ ! -d builds/master ]; then
-            cmake -B builds/master -S master -DFINUFFT_BUILD_TESTS=ON &&
-            cmake --build builds/master --target perftest -j
+          mkdir -p ../builds
+          if [ ! -d ../builds/master ]; then
+            cmake -B ../builds/master -S ../master -DFINUFFT_BUILD_TESTS=ON &&
+            cmake --build ../builds/master --target perftest -j
           fi
-          if [ ! -d builds/pr-head ]; then
-            cmake -B builds/pr-head -S pr-head -DFINUFFT_BUILD_TESTS=ON &&
-            cmake --build builds/pr-head --target perftest -j
+          if [ ! -d ../builds/pr-head ]; then
+            rm -fr ../builds/pr-head/perftest
+            cmake -B ../builds/pr-head -S ../pr-head -DFINUFFT_BUILD_TESTS=ON &&
+            cmake --build ../builds/pr-head --target perftest -j
           fi
           pip install pandas matplotlib
-          python3 master/perftest/collect_dual_perftest.py \
-            --master-perftest builds/master/perftest/perftest \
-            --pr-perftest builds/pr-head/perftest/perftest \
-            --output comment.md
+          python3 perftest/collect_dual_perftest.py \
+            --master-perftest ../builds/master/perftest/perftest \
+            --pr-perftest ../builds/pr-head/perftest/perftest \
+            --plot-output perftest_comment_figure.png
 
-          touch comment.md
-
+      - name: Commit benchmark results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git branch -D perftest-comment-figure || true && git switch --orphan perftest-comment-figure
+          git add perftest_comment_figure.png
+          PRE_COMMIT_ALLOW_NO_CONFIG=1 git commit -m "Performance change [no ci]"
+          IMAGE_SHA=$(git rev-parse HEAD)
+          echo $IMAGE_SHA
+          git push  https://${GITHUB_TOKEN}@github.com/${{ github.repository }} perftest-comment-figure
+          echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
 
       - name: Find existing managed comment
         if: always()
@@ -70,7 +87,9 @@ jobs:
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body-path: comment.md
+          body: |
+            <!-- pr-managed-comment -->
+            ${{ steps.build.outputs.image_sha }}
 
       - name: Update managed PR comment
         if: always() && steps.find-comment.outputs.comment-id != ''
@@ -78,4 +97,6 @@ jobs:
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
-          body-path: comment.md
+          body: |
+            <!-- pr-managed-comment -->
+            ${{ steps.build.outputs.image_sha }}
