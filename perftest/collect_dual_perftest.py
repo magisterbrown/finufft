@@ -97,7 +97,7 @@ def main() -> None:
         "--master-perftest", default="../builds/master/perftest/perftest"
     )
     parser.add_argument("--pr-perftest", default="../builds/pr-head/perftest/perftest")
-    parser.add_argument("--plot-output", default="comment-plot.png")
+    parser.add_argument("--plot-output", default="figure.png")
 
     args = parser.parse_args()
 
