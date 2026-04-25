@@ -54,14 +54,14 @@ jobs:
             --pr-perftest builds/pr-head/perftest/perftest \
             --plot-output master/perftest_comment_figure.png
 
-          git -C master config user.name "github-actions[bot]"
-          git -C master config user.email "github-actions[bot]@github.com"
+          git -C master config user.name "GitHub Actions Bot"
+          git -C master config user.email "actions@github.com"
           git -C master branch -D perftest-comment-figure || true && git -C master switch --orphan perftest-comment-figure
           git -C master add perftest_comment_figure.png
           PRE_COMMIT_ALLOW_NO_CONFIG=1 git -C master commit -m "Performance change [no ci]"
           IMAGE_SHA=$(git -C master rev-parse HEAD)
           echo $IMAGE_SHA
-          git -C master push -f --set-upstream origin perftest-comment-figure
+          git -C master push  https://${GITHUB_TOKEN}@github.com/${{ github.repository }} perftest-comment-figure
           echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
 
       - name: Find existing managed comment
