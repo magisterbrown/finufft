@@ -57,7 +57,7 @@ jobs:
           PRE_COMMIT_ALLOW_NO_CONFIG=1 git -C master commit -m "Performance change [no ci]"
           IMAGE_SHA=$(git -C master rev-parse HEAD)
           echo $IMAGE_SHA
-          git -C master push
+          git -C master push --set-upstream origin orphan-new
           echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
 
       - name: Find existing managed comment
