@@ -54,7 +54,7 @@ jobs:
 
           git -C master branch -D orphan-new || true && git -C finufft switch --orphan orphan-new
           git -C master add perftest_comment_figure.png
-          PRE_COMMIT_ALLOW_NO_CONFIG=1 git -C master finufft commit "Performance change [no ci]"
+          PRE_COMMIT_ALLOW_NO_CONFIG=1 git -C master commit -m "Performance change [no ci]"
           IMAGE_SHA=$(git -C master rev-parse HEAD)
           echo $IMAGE_SHA
           git -C master push
