@@ -68,7 +68,7 @@ jobs:
           PRE_COMMIT_ALLOW_NO_CONFIG=1 git commit -m "Performance change [no ci]"
           IMAGE_SHA=$(git rev-parse HEAD)
           echo $IMAGE_SHA
-          git push  https://${GITHUB_TOKEN}@github.com/${{ github.repository }} perftest-comment-figure
+          git push -f https://${GITHUB_TOKEN}@github.com/${{ github.repository }} perftest-comment-figure
           echo "image_sha=$IMAGE_SHA" >> $GITHUB_OUTPUT
 
       - name: Find existing managed comment
