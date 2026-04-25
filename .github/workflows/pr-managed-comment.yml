@@ -61,7 +61,7 @@ jobs:
 
       - name: Commit benchmark results
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           git branch -D perftest-comment-figure || true && git switch --orphan perftest-comment-figure
           git add perftest_comment_figure.png
