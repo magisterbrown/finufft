@@ -17,20 +17,17 @@ jobs:
       pull-requests: write
       issues: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Checkout latest master
         uses: actions/checkout@v4
         with:
           ref: 'master'
-          path: ../master
+          path: master
 
       - name: Checkout pr head
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          path: ../pr-head
+          path: pr-head
 
       - name: Configure Git
         run: |
@@ -45,20 +42,21 @@ jobs:
       - name: Build latest master and PR head
         id: build
         run: |
-          mkdir -p ../builds
-          if [ ! -d ../builds/master ]; then
-            cmake -B ../builds/master -S ../master -DFINUFFT_BUILD_TESTS=ON &&
-            cmake --build ../builds/master --target perftest -j
+          mkdir -p builds
+          if [ ! -d builds/master ]; then
+            cmake -B builds/master -S master -DFINUFFT_BUILD_TESTS=ON &&
+            cmake --build builds/master --target perftest -j
           fi
-          if [ ! -d ../builds/pr-head ]; then
-            rm -fr ../builds/pr-head/perftest
-            cmake -B ../builds/pr-head -S ../pr-head -DFINUFFT_BUILD_TESTS=ON &&
-            cmake --build ../builds/pr-head --target perftest -j
+          if [ ! -d builds/pr-head ]; then
+            rm -fr pr-head/perftest
+            cp -r master/perftest pr-head/perftest
+            cmake -B builds/pr-head -S pr-head -DFINUFFT_BUILD_TESTS=ON &&
+            cmake --build builds/pr-head --target perftest -j
           fi
           pip install pandas matplotlib
-          python3 perftest/collect_dual_perftest.py \
-            --master-perftest ../builds/master/perftest/perftest \
-            --pr-perftest ../builds/pr-head/perftest/perftest \
+          python3 master/perftest/collect_dual_perftest.py \
+            --master-perftest builds/master/perftest/perftest \
+            --pr-perftest builds/pr-head/perftest/perftest \
             --plot-output perftest_comment_figure.png
 
       - name: Commit benchmark results
