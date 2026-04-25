@@ -17,6 +17,9 @@ jobs:
       pull-requests: write
       issues: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Checkout latest master
         uses: actions/checkout@v4
         with:
