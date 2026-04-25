@@ -45,6 +45,7 @@ jobs:
       - name: Build latest master and PR head
         id: build
         run: |
+
           mkdir -p builds
           if [ ! -d builds/master ]; then
             cmake -B builds/master -S master -DFINUFFT_BUILD_TESTS=ON &&
