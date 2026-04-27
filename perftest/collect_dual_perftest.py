@@ -101,10 +101,8 @@ def main() -> None:
     stages = ["execute", "makeplan", "setpts"]
     for i, param in enumerate(PARAM_LIST):
         for j, transform in enumerate(TRANSFORMS):
-            # master_df = run_one_perftest(param, transform, args.master_perftest)
-            # prhead_df = run_one_perftest(param, transform, args.pr_perftest)
-            master_df = pd.read_csv("/tmp/m.csv", index_col="event")
-            prhead_df = pd.read_csv("/tmp/p.csv", index_col="event")
+            master_df = run_one_perftest(param, transform, args.master_perftest)
+            prhead_df = run_one_perftest(param, transform, args.pr_perftest)
             ax = axs[i][j]
             bottoms = np.array([0, 0], dtype=np.float64)
             for stage in stages:
@@ -121,7 +119,6 @@ def main() -> None:
     fig.tight_layout(pad=2, h_pad=2)
     fig.savefig(args.plot_output, dpi=150)
     plt.close(fig)
-    # plt.show()
 
 
 if __name__ == "__main__":
