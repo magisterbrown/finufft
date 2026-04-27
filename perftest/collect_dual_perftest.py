@@ -6,6 +6,7 @@ from numbers import Number
 import io
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 @dataclass(frozen=True)
@@ -30,22 +31,23 @@ class Params:
         return [f"{f.name}={getattr(self, f.name)}" for f in fields(self)]
 
     def pretty_string(self) -> str:
-        return ", ".join(f"{f.name}={getattr(self, f.name)}" for f in fields(self))
+        n = 4
+        fvalues = [f"{f.name}:{getattr(self, f.name)}" for f in fields(self)]
+        chunks = [" ".join(fvalues[i : i + n]) for i in range(0, len(fvalues), n)]
+        return "\n".join(chunks)
 
 
 NRUNS = 10
 
 PARAM_LIST = [
-    Params("f", 1e4, 1, 1, 1, 1, 1e7, 1e-4),
-    # Params("d", 1e4, 1, 1, 1, 1, 1e7, 1e-9),
-    # Params("f", 320, 320, 1, 1, 1, 1e7, 1e-5),
-    # Params("d", 320, 320, 1, 1, 1, 1e7, 1e-9),
-    # Params("f", 320, 320, 1, 1, 0, 1e7, 1e-5),
-    # Params("d", 192, 192, 128, 1, 0, 1e7, 1e-7),
+    Params("f", 1e2, 1, 1, 1, 1, 1e7, 1e-4),
+    Params("f", 320, 320, 1, 1, 1, 1e7, 1e-5),
+    Params("d", 320, 320, 1, 1, 1, 1e7, 1e-9),
+    Params("f", 320, 320, 1, 1, 0, 1e7, 1e-5),
+    Params("d", 192, 192, 128, 1, 0, 1e7, 1e-7),
 ]
 
-# TRANSFORMS = [3, 2, 1]
-TRANSFORMS = [1]
+TRANSFORMS = [3, 2, 1]
 
 
 DEFAULT_EXTRA_ARGS = [
@@ -58,37 +60,27 @@ DEFAULT_EXTRA_ARGS = [
 ]
 
 
-def run_one_perftest(binary_path: str) -> str:
-    res = ""
-    for param in PARAM_LIST:
-        for transform in TRANSFORMS:
-            cmd = (
-                [binary_path]
-                + param.args()
-                + DEFAULT_EXTRA_ARGS
-                + [f"type={transform}"]
+def run_one_perftest(param, transform, binary_path: str) -> pd.DataFrame:
+    cmd = [binary_path] + param.args() + DEFAULT_EXTRA_ARGS + [f"type={transform}"]
+    result = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    return pd.read_csv(
+        io.StringIO(
+            "\n".join(
+                [
+                    line
+                    for line in result.stdout.splitlines()
+                    if not line.startswith("#")
+                ]
             )
-            result = subprocess.run(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                check=False,
-            )
-            test_res = pd.read_csv(
-                io.StringIO(
-                    "\n".join(
-                        [
-                            line
-                            for line in result.stdout.splitlines()
-                            if not line.startswith("#")
-                        ]
-                    )
-                ),
-                sep=",",
-            )
-            res = f"{res}\n{test_res.to_string(index=False)}"
-    return res
+        ),
+        sep=",",
+    ).set_index("event")
 
 
 def main() -> None:
@@ -100,28 +92,31 @@ def main() -> None:
     parser.add_argument("--plot-output", default="figure.png")
 
     args = parser.parse_args()
-
-    perftest_summary = run_one_perftest(args.master_perftest) + run_one_perftest(
-        args.pr_perftest
+    fig, axs = plt.subplots(
+        len(PARAM_LIST),
+        len(TRANSFORMS),
+        figsize=(len(TRANSFORMS) * 4, len(PARAM_LIST) * 4),
+        squeeze=False,
     )
-
-    timestamp = datetime.now().strftime("%a %d %b %Y %H:%M:%S %Z")
-    body = "<!-- pr-managed-comment -->\\n"
-    body += f"Time now: {timestamp}\\n"
-    body += "Perftest runs:\\n"
-    body += perftest_summary
-    print(body)
-
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.set_title("Perftest summary")
-    ax.set_xlabel("run")
-    ax.set_ylabel("value")
-    ax.text(
-        0.5, 0.5, "No plotted data", ha="center", va="center", transform=ax.transAxes
-    )
-    ax.set_xticks([])
-    ax.set_yticks([])
-    fig.tight_layout()
+    stages = ["execute", "makeplan", "setpts"]
+    for i, param in enumerate(PARAM_LIST):
+        for j, transform in enumerate(TRANSFORMS):
+            master_df = run_one_perftest(param, transform, args.master_perftest)
+            prhead_df = run_one_perftest(param, transform, args.pr_perftest)
+            ax = axs[i][j]
+            bottoms = np.array([0, 0], dtype=np.float64)
+            for stage in stages:
+                heights = (
+                    master_df.loc[stage, "mean(ms)"],
+                    prhead_df.loc[stage, "mean(ms)"],
+                )
+                ax.bar(["master", " pr head"], heights, bottom=bottoms, label=stage)
+                bottoms += heights
+            ax.set_ylabel("time (ms)")
+            ax.set_title(f"type:{transform} {param.pretty_string()}")
+    axs[0][-1].legend()
+    fig.suptitle("Performance change between master and latest pr HEAD", fontsize=24)
+    fig.tight_layout(pad=2, h_pad=2)
     fig.savefig(args.plot_output, dpi=150)
     plt.close(fig)
 
