@@ -42,7 +42,7 @@ jobs:
               src_path="../$tag"
             fi
             cmake -B ../builds/$tag -S $src_path -DFINUFFT_BUILD_TESTS=ON &&
-            cmake --build ../builds/$tag --target perftest
+            cmake --build ../builds/$tag --target perftest -j
           done
 
 
