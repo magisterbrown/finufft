@@ -33,16 +33,18 @@ jobs:
           tags="$VERSIONS_INPUT,master"
           IFS=','
           for tag in $tags; do
-            if [ "$tag" = "master" ]; then
-              src_path="."
-            else
-              git worktree add -f -d ../$tag tags/$tag
-              rm -fr ../$tag/perftest
-              cp -r perftest ../$tag/perftest
-              src_path="../$tag"
+            if [ ! -d "../builds/$tag" ]; then
+              if [ "$tag" = "master" ]; then
+                src_path="."
+              else
+                git worktree add -f -d ../$tag tags/$tag
+                rm -fr ../$tag/perftest
+                cp -r perftest ../$tag/perftest
+                src_path="../$tag"
+              fi
+              cmake -B ../builds/$tag -S $src_path -DFINUFFT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release &&
+              cmake --build ../builds/$tag --target perftest -j
             fi
-            cmake -B ../builds/$tag -S $src_path -DFINUFFT_BUILD_TESTS=ON &&
-            cmake --build ../builds/$tag --target perftest -j
           done
 
 

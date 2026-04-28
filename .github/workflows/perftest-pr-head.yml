@@ -36,12 +36,12 @@ jobs:
         run: |
           mkdir -p builds
 
-          cmake -B builds/master -S master -DFINUFFT_BUILD_TESTS=ON &&
+          cmake -B builds/master -S master -DFINUFFT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release &&
           cmake --build builds/master --target perftest -j
 
           rm -fr pr-head/perftest
           cp -r master/perftest pr-head/perftest
-          cmake -B builds/pr-head -S pr-head -DFINUFFT_BUILD_TESTS=ON &&
+          cmake -B builds/pr-head -S pr-head -DFINUFFT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release &&
           cmake --build builds/pr-head --target perftest -j
 
           pip install pandas matplotlib
