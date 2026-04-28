@@ -1,4 +1,5 @@
 import hashlib
+import json
 from dataclasses import dataclass, fields, asdict
 from numbers import Number
 
