@@ -13,7 +13,7 @@ jobs:
   perftest:
     env:
       VERSIONS_INPUT: ${{ github.event.inputs.versions || github.event.inputs.default }}
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout latest perftest
         uses: actions/checkout@v6
