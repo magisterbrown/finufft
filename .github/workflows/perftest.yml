@@ -1,17 +1,14 @@
 name: Run perftests
 
 on:
-  workflow_dispatch:
-    inputs:
-      versions:
-        description: "Comma separated version list"
-        type: string
-        default: 'v2.2.0,v2.3.0,v2.4.1,v2.5.0'
+  push:
+    branches:
+      - master
 
 jobs:
   perftest:
     env:
-      VERSIONS_INPUT: ${{ github.event.inputs.versions }}
+      VERSIONS_INPUT: 'v2.2.0,v2.3.1,v2.4.1,v2.5.1'
     runs-on: self-hosted
     steps:
       - name: Checkout latest perftest
