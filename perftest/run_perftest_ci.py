@@ -134,6 +134,17 @@ def main() -> None:
             ax.legend()
 
             file = f"perftestci_{(plot_num := plot_num + 1)}.png"
+            durations = np.array(makeplan) + np.array(setpts) + np.array(execute)
+            ax.set_ylim(top=np.max(durations) * 1.1)
+            for i in range(len(x)):
+                ax.text(
+                    x[i],
+                    durations[i],
+                    f"{durations[i] / durations[0]:.2f}x",
+                    ha="center",
+                    va="bottom",
+                )
+
             fig.savefig(plot_path / file)
             plt.close(fig)
 
