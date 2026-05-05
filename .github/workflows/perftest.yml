@@ -86,6 +86,7 @@ jobs:
       - name: Move results
         run: |
           rm -fr docs/pics/perftestci_*
+          ls outputs
           mv outputs/*.rst docs/
           mv outputs/*.png docs/pics/
 
