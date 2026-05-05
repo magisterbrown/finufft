@@ -74,6 +74,7 @@ jobs:
           path: ./outputs/
 
   gather-matrix-results:
+    needs: perftest
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
