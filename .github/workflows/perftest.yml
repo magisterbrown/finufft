@@ -56,7 +56,7 @@ jobs:
           python-version: '3.12'
       - run: python3 -m pip install --quiet matplotlib pandas Jinja2 py-cpuinfo
 
-      - name: Summarize matrix results
+      - name: Generate docs page
         run: |
           rm -f outputs
           mkdir -p outputs
@@ -82,6 +82,12 @@ jobs:
           name: perftest-result
           path: ./outputs/
           merge-multiple: true
+
+      - name: Move results
+        run: |
+          rm -fr docs/pics/perftestci_*
+          mv outputs/*.j2 docs/
+          mv outputs/*.png docs/pics/
 
       - name: Commit generated perftest docs
         if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
