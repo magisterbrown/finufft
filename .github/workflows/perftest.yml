@@ -64,7 +64,7 @@ jobs:
             --backend "${{ matrix.target.name }}" \
             --builds-root ../builds \
             --tag-list "$VERSIONS_INPUT master" \
-            --page_template docs/performance_change.rst.j2 \
+            --page-template docs/performance_change.rst.j2 \
             --output outputs
 
       - uses: actions/upload-artifact@v4

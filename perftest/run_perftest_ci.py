@@ -87,7 +87,6 @@ def main() -> None:
     args = parser.parse_args()
 
     builds_root = Path(args.builds_root)
-    print(builds_root)
     assert builds_root.exists()
     output_dir = Path(args.outputs)
     assert output_dir.exists()
