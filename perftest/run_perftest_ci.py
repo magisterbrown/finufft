@@ -173,7 +173,7 @@ def main() -> None:
         compiler_flags=compiler_flags,
         dim_transform_groups=dim_transform_groups,
     )
-    (output_dir / f"{args.backend}.j2").write_text(rendered, encoding="utf-8")
+    (output_dir / f"{args.backend}.rst").write_text(rendered, encoding="utf-8")
 
 
 if __name__ == "__main__":
