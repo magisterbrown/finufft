@@ -7,6 +7,13 @@ on:
 
 jobs:
   perftest:
+    strategy:
+      matrix:
+        target:
+          - name: "fftw"
+            ducc_enabled: "OFF"
+          - name: "ducc"
+            ducc_enabled: "ON"
     env:
       VERSIONS_INPUT: 'v2.2.0,v2.3.1,v2.4.1,v2.5.1'
     runs-on: self-hosted
@@ -39,10 +46,9 @@ jobs:
               cp -r perftest ../$tag/perftest
               src_path="../$tag"
             fi
-            cmake -B ../builds/$tag -S $src_path -DFINUFFT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release &&
+            cmake -B ../builds/$tag -S $src_path -DFINUFFT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release -DFINUFFT_USE_DUCC0=${{ matrix.target.ducc_enabled }} &&
             cmake --build ../builds/$tag --target perftest -j
           done
-
 
       - name: Install plotting dependency
         uses: actions/setup-python@v6
@@ -52,12 +58,27 @@ jobs:
 
       - name: Summarize matrix results
         run: |
-          rm -f docs/pics/perftestci_*
+          rm -f outputs
+          mkdir -p outputs
           python3 perftest/run_perftest_ci.py \
+            --backend "${{ matrix.target.name }}"
             --builds-root ../builds \
             --tag-list "$VERSIONS_INPUT,master" \
-            --plot-output-dir docs/pics \
-            --docs-page-path docs/performance_change.rst.j2
+            --docs-page-path docs/performance_change.rst.j2 \
+            --output outputs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: perftest-result
+          path: ./outputs/
+
+  gather-matrix-results:
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: ./outputs/
+          merge-multiple: true
 
       - name: Commit generated perftest docs
         if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'

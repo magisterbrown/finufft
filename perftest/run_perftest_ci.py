@@ -5,6 +5,7 @@ import io
 import subprocess
 from collections import defaultdict
 from pathlib import Path
+import uuid
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -60,6 +61,11 @@ def main() -> None:
         description="Run perftest matrix and generate plots."
     )
     parser.add_argument(
+        "--backend",
+        default="fftw",
+        help="FFT backend name.",
+    )
+    parser.add_argument(
         "--builds-root",
         default="/builds",
     )
@@ -69,22 +75,22 @@ def main() -> None:
         help="Comma-separated tags in preferred display order.",
     )
     parser.add_argument(
-        "--plot-output-dir",
-        default="docs/pics",
-        help="Output directory for generated performance plot images.",
-    )
-    parser.add_argument(
-        "--docs-page-path",
+        "--page-template",
         default="docs/performance_change.rst.j2",
         help="Path to the docs template page to render.",
+    )
+    parser.add_argument(
+        "--outputs",
+        default="./outputs",
+        help="Output directory for generated performance report.",
     )
     args = parser.parse_args()
 
     builds_root = Path(args.builds_root)
     assert builds_root.exists()
-    plot_path = Path(args.plot_output_dir)
-    assert plot_path.exists()
-    template_path = Path(args.docs_page_path)
+    output_dir = Path(args.outputs)
+    assert output_dir.exists()
+    template_path = Path(args.page_template)
     assert template_path.exists()
 
     tags = args.tag_list.split(",")
@@ -133,7 +139,7 @@ def main() -> None:
             ax.set_ylabel("Mean time (ms)")
             ax.legend()
 
-            file = f"perftestci_{(plot_num := plot_num + 1)}.png"
+            file = f"perftestci_{uuid.uuid4()}.png"
             durations = np.array(makeplan) + np.array(setpts) + np.array(execute)
             ax.set_ylim(top=np.max(durations) * 1.1)
             for i in range(len(x)):
@@ -145,7 +151,7 @@ def main() -> None:
                     va="bottom",
                 )
 
-            fig.savefig(plot_path / file)
+            fig.savefig(output_dir / file)
             plt.close(fig)
 
             dim_transform_groups[param.ndim()][transform].append(
@@ -158,6 +164,7 @@ def main() -> None:
     env = Environment(loader=FileSystemLoader(template_path.parent))
     template = env.get_template(template_path.name)
     rendered = template.render(
+        backend=args.backend,
         cpu_name=cpu_info["brand_raw"],
         arch=cpu_info["arch"],
         core_count=cpu_info["count"],
@@ -166,7 +173,7 @@ def main() -> None:
         compiler_flags=compiler_flags,
         dim_transform_groups=dim_transform_groups,
     )
-    template_path.with_suffix("").write_text(rendered, encoding="utf-8")
+    (output_dir / f"{args.backend}.j2").write_text(rendered, encoding="utf-8")
 
 
 if __name__ == "__main__":
