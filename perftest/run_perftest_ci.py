@@ -2,6 +2,7 @@
 import argparse
 import os
 import io
+import re
 import subprocess
 from collections import defaultdict
 from pathlib import Path
@@ -95,6 +96,12 @@ def main() -> None:
 
     tags = args.tag_list.split(" ")
 
+    helpmsg = subprocess.run(
+        [builds_root / "master" / "perftest" / "perftest", "--debug=2"],
+        capture_output=True,
+        text=True,
+    ).stdout
+    ncores = int(re.search(r"opts.nthreads=(\d+)", helpmsg).groups()[0])
     compiler_version = "NA"
     compiler_flags = "NA"
     with open(builds_root / tags[-1] / "CMakeCache.txt", "r") as f:
@@ -167,7 +174,7 @@ def main() -> None:
         backend=args.backend,
         cpu_name=cpu_info["brand_raw"],
         arch=cpu_info["arch"],
-        core_count=cpu_info["count"],
+        core_count=ncores,
         flags=", ".join(cpu_info["flags"]),
         compiler_version=compiler_version,
         compiler_flags=compiler_flags,
