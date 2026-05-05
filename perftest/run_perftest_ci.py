@@ -46,7 +46,11 @@ def run_benchmarks_for_bin(
         "--bandwidth=1.0",
     ]
     perftest_args = param.args() + extra_args + [f"--type={transform}"]
-    output = run_command(str(perftest_bin), perftest_args)
+    if param.threads == 1:
+        args = ["-c", "0", str(perftest_bin), "--arg"] + perftest_args
+        output = run_command("taskset", args)
+    else:
+        output = run_command(str(perftest_bin), perftest_args)
     return pd.read_csv(
         io.StringIO(
             "\n".join(
