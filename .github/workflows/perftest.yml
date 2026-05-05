@@ -15,7 +15,8 @@ jobs:
           - name: "ducc"
             ducc_enabled: "ON"
     env:
-      VERSIONS_INPUT: 'v2.2.0,v2.3.1,v2.4.1,v2.5.1'
+      VERSIONS_INPUT: 'v2.5.1'
+      #VERSIONS_INPUT: 'v2.2.0,v2.3.1,v2.4.1,v2.5.1'
     runs-on: self-hosted
     steps:
       - name: Checkout latest perftest
@@ -64,7 +65,7 @@ jobs:
             --backend "${{ matrix.target.name }}"
             --builds-root ../builds \
             --tag-list "$VERSIONS_INPUT,master" \
-            --docs-page-path docs/performance_change.rst.j2 \
+            --page_template docs/performance_change.rst.j2 \
             --output outputs
 
       - uses: actions/upload-artifact@v4

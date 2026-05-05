@@ -67,7 +67,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--builds-root",
-        default="/builds",
+        default="./builds",
     )
     parser.add_argument(
         "--tag-list",
