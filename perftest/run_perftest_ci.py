@@ -87,13 +87,14 @@ def main() -> None:
     args = parser.parse_args()
 
     builds_root = Path(args.builds_root)
+    print(builds_root)
     assert builds_root.exists()
     output_dir = Path(args.outputs)
     assert output_dir.exists()
     template_path = Path(args.page_template)
     assert template_path.exists()
 
-    tags = args.tag_list.split(",")
+    tags = args.tag_list.split(" ")
 
     compiler_version = "NA"
     compiler_flags = "NA"

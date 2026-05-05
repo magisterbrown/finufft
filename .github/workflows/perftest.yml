@@ -63,7 +63,7 @@ jobs:
           python3 perftest/run_perftest_ci.py \
             --backend "${{ matrix.target.name }}"
             --builds-root ../builds \
-            --tag-list "$VERSIONS_INPUT,master" \
+            --tag-list "$VERSIONS_INPUT master" \
             --page_template docs/performance_change.rst.j2 \
             --output outputs
 
