@@ -81,7 +81,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--page-template",
-        default="docs/performance_change.rst.j2",
+        default="docs/performance_backend.rst.j2",
         help="Path to the docs template page to render.",
     )
     parser.add_argument(
@@ -175,7 +175,7 @@ def main() -> None:
     env = Environment(loader=FileSystemLoader(template_path.parent))
     template = env.get_template(template_path.name)
     rendered = template.render(
-        backend=args.backend.capitalize(),
+        backend=args.backend.upper(),
         cpu_name=cpu_info["brand_raw"],
         arch=cpu_info["arch"],
         core_count=ncores,

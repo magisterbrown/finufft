@@ -63,7 +63,14 @@ def main() -> None:
     print(f"arch={cpu_info['arch']}")
     cpu_flags = ", ".join(cpu_info["flags"])
     print(f"cpu_flags={cpu_flags}")
-    print(f"ncores={cpu_info['count']}")
+
+    helpmsg = subprocess.run(
+        [args.master_perftest, "--debug=2"],
+        capture_output=True,
+        text=True,
+    ).stdout
+    ncores = int(re.search(r"opts.nthreads=(\d+)", helpmsg).groups()[0])
+    print(f"ncores={ncores}")
 
     compiler_version = "NA"
     compiler_flags = "NA"
