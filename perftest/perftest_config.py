@@ -32,13 +32,13 @@ class Params:
         return "\n".join(chunks)
 
 
-NRUNS = 1
+NRUNS = 10
 PARAM_LIST = [
     Params("f", 1e4, 1, 1, 1, 1, 1e7, 1e-4),
-    # Params("d", 1e4, 1, 1, 1, 1, 1e7, 1e-9),
-    # Params("f", 320, 320, 1, 1, 1, 1e7, 1e-5),
-    # Params("d", 320, 320, 1, 1, 1, 1e7, 1e-9),
-    # Params("f", 320, 320, 1, 1, 0, 1e7, 1e-5),
-    # Params("d", 192, 192, 128, 1, 0, 1e7, 1e-7),
+    Params("d", 1e4, 1, 1, 1, 1, 1e7, 1e-9),
+    Params("f", 320, 320, 1, 1, 1, 1e7, 1e-5),
+    Params("d", 320, 320, 1, 1, 1, 1e7, 1e-9),
+    Params("f", 320, 320, 1, 1, 0, 1e7, 1e-5),
+    Params("d", 192, 192, 128, 1, 0, 1e7, 1e-7),
 ]
 TRANSFORMS = [1, 2, 3]
