@@ -1,4 +1,4 @@
-.. _performance_change:
+.. _summary_performance_change:
 
 Performance change
 ==================
