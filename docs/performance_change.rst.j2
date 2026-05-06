@@ -1,17 +1,17 @@
 {{ backend }}
 ---------------------------------------------
 
-CPU name: `{{ cpu_name }}`.
+CPU name: ``{{ cpu_name }}``.
 
-Arch: `{{ arch }}`.
+Arch: ``{{ arch }}``.
 
-Core count: `{{ core_count }}`.
+Core count: ``{{ core_count }}``.
 
-ISA extensions present: `{{ flags }}`.
+ISA extensions present: ``{{ flags }}``.
 
-Compiler version: `{{ compiler_version }}`.
+Compiler version: ``{{ compiler_version }}``.
 
-Compiler flags: `{{ compiler_flags }}`.
+Compiler flags: ``{{ compiler_flags }}``.
 
 
 {% for dim, transform_groups in dim_transform_groups.items() %}

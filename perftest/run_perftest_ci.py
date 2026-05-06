@@ -175,7 +175,7 @@ def main() -> None:
     env = Environment(loader=FileSystemLoader(template_path.parent))
     template = env.get_template(template_path.name)
     rendered = template.render(
-        backend=args.backend,
+        backend=args.backend.capitalize(),
         cpu_name=cpu_info["brand_raw"],
         arch=cpu_info["arch"],
         core_count=ncores,
