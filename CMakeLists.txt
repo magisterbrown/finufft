@@ -107,6 +107,7 @@ endif()
 if(BUILD_TESTING AND FINUFFT_USE_CPU AND FINUFFT_BUILD_TESTS)
     add_subdirectory(test)
     add_subdirectory(perftest)
+        add_subdirectory(perftest/benchmarks)
 endif()
 
 if(FINUFFT_BUILD_EXAMPLES AND FINUFFT_USE_CPU)
