@@ -74,29 +74,26 @@ template<typename T> void run_test() {
   T *u_p = type == 3 && dim == 3 ? u.data() : nullptr;
   finufft_opts opts;
   finufft_default_opts(&opts);
-  opts.debug           = 0;
-  opts.nthreads        = 1;
-  opts.fftw_unlock_fun = nullptr;
-  opts.fftw_lock_fun   = nullptr;
+  opts.nthreads = 1;
   if constexpr (std::is_same_v<T, double>) {
-    benchmark::RegisterBenchmark(benchmark_name, [=](benchmark::State &state) {
+    benchmark::RegisterBenchmark(benchmark_name, [=](benchmark::State &state) mutable {
       for (auto _ : state) {
         finufft_plan_s *plan{nullptr};
         finufft_makeplan(type, dim, Nd, iflag, ntransf, tol, &plan, &opts);
-        // finufft_setpts(plan, M, x_p, y_p, z_p, N, s_p, t_p, u_p);
-        // finufft_execute(plan, c.data(), fk.data());
+        finufft_setpts(plan, M, x_p, y_p, z_p, N, s_p, t_p, u_p);
+        finufft_execute(plan, c.data(), fk.data());
         finufft_destroy(plan);
         state.SetItemsProcessed(N + M);
         benchmark::ClobberMemory();
       }
     });
   } else if constexpr (std::is_same_v<T, float>) {
-    benchmark::RegisterBenchmark(benchmark_name, [=](benchmark::State &state) {
+    benchmark::RegisterBenchmark(benchmark_name, [=](benchmark::State &state) mutable {
       for (auto _ : state) {
         finufftf_plan_s *plan{nullptr};
         finufftf_makeplan(type, dim, Nd, iflag, ntransf, tol, &plan, &opts);
-        finufft_setpts(plan, M, x_p, y_p, z_p, N, s_p, t_p, u_p);
-        finufft_execute(plan, c.data(), fk.data());
+        finufftf_setpts(plan, M, x_p, y_p, z_p, N, s_p, t_p, u_p);
+        finufftf_execute(plan, c.data(), fk.data());
         state.SetItemsProcessed(N + M);
         finufftf_destroy(plan);
         benchmark::ClobberMemory();
@@ -106,8 +103,9 @@ template<typename T> void run_test() {
 }
 
 int main(int argc, char **argv) {
-  run_test<double>();
   benchmark::Initialize(&argc, argv);
+  // run_test<double>();
+  run_test<float>();
   benchmark::RunSpecifiedBenchmarks();
   benchmark::Shutdown();
 }
