@@ -6,8 +6,6 @@
 #include <fftw3.h>
 #endif
 
-#include <iostream>
-
 static const double PI = 3.141592653589793238462643383279502884;
 template<typename T> void run_test() {
   const int ntransf    = 1;
@@ -19,8 +17,6 @@ template<typename T> void run_test() {
   constexpr int iflag  = 1;
   double tol           = 1e-5;
   auto benchmark_name  = "perftest/benchmarks/test_benchmark::FINUFFT";
-
-  std::cout << "DIMMS: " << dim << std::endl;
 
   std::vector<T> x(M * ntransf), y(M * ntransf), z(M * ntransf);
   std::vector<T> s(N * ntransf), t(N * ntransf), u(N * ntransf);
@@ -74,19 +70,16 @@ template<typename T> void run_test() {
   T *u_p = type == 3 && dim == 3 ? u.data() : nullptr;
   finufft_opts opts;
   finufft_default_opts(&opts);
-  opts.fftw_lock_fun   = nullptr;
-  opts.fftw_unlock_fun = nullptr;
-  opts.debug           = 0;
-  opts.nthreads        = 1;
+  opts.nthreads = 1;
   if constexpr (std::is_same_v<T, double>) {
     benchmark::RegisterBenchmark(benchmark_name, [&](benchmark::State &state) {
       for (auto _ : state) {
         finufft_plan_s *plan{nullptr};
-        finufft_makeplan(type, dim, Nd, iflag, ntransf, tol, &plan, &opts);
+        finufft_makeplan(type, 1, Nd, iflag, ntransf, tol, &plan, &opts);
         // finufft_setpts(plan, M, x_p, y_p, z_p, N, s_p, t_p, u_p);
         // finufft_execute(plan, c.data(), fk.data());
-        finufft_destroy(plan);
         state.SetItemsProcessed(N + M);
+        finufft_destroy(plan);
         benchmark::ClobberMemory();
       }
     });
@@ -94,7 +87,7 @@ template<typename T> void run_test() {
     benchmark::RegisterBenchmark(benchmark_name, [&](benchmark::State &state) {
       for (auto _ : state) {
         finufftf_plan_s *plan{nullptr};
-        finufftf_makeplan(type, dim, Nd, iflag, ntransf, tol, &plan, &opts);
+        finufftf_makeplan(type, 1, Nd, iflag, ntransf, tol, &plan, &opts);
         finufft_setpts(plan, M, x_p, y_p, z_p, N, s_p, t_p, u_p);
         finufft_execute(plan, c.data(), fk.data());
         state.SetItemsProcessed(N + M);
