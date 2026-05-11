@@ -74,15 +74,25 @@ template<typename T> void run_test() {
   T *u_p = type == 3 && dim == 3 ? u.data() : nullptr;
   finufft_opts opts;
   finufft_default_opts(&opts);
-  opts.fftw_lock_fun   = nullptr;
+  int a                = 1;
   opts.fftw_unlock_fun = nullptr;
+  opts.fftw_lock_fun   = nullptr;
+  if (opts.fftw_unlock_fun == opts.fftw_lock_fun) {
+    std::cout << "LOCK " << opts.fftw_lock_fun << " Unlock " << opts.fftw_unlock_fun
+              << "\n";
+  }
   opts.debug           = 0;
   opts.nthreads        = 1;
   if constexpr (std::is_same_v<T, double>) {
     benchmark::RegisterBenchmark(benchmark_name, [&](benchmark::State &state) {
       for (auto _ : state) {
         finufft_plan_s *plan{nullptr};
+        std::cout << "LOCK " << opts.fftw_lock_fun << " Unlock " << opts.fftw_unlock_fun
+                  << "\n";
         finufft_makeplan(type, dim, Nd, iflag, ntransf, tol, &plan, &opts);
+        std::cout << "LOCK " << opts.fftw_lock_fun << " Unlock " << opts.fftw_unlock_fun
+                  << "\n";
+        break;
         // finufft_setpts(plan, M, x_p, y_p, z_p, N, s_p, t_p, u_p);
         // finufft_execute(plan, c.data(), fk.data());
         finufft_destroy(plan);
