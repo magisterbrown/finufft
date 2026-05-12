@@ -33,4 +33,4 @@ endif()
 add_executable(perftest_bench perftest_bench.cpp)
 target_link_libraries(perftest_bench PRIVATE benchmark::benchmark)
 
-finufft_link_test(test_benchmark)
+finufft_link_test(perftest_bench)
