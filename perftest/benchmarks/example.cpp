@@ -86,7 +86,6 @@ template<typename T> void register_benchmark() {
         finufft_setpts(plan, M, x_p, y_p, z_p, N, s_p, t_p, u_p);
         finufft_execute(plan, c.data(), fk.data());
         finufft_destroy(plan);
-        state.SetItemsProcessed(N + M);
         benchmark::ClobberMemory();
       } else if constexpr (std::is_same_v<T, float>) {
         finufftf_plan_s *plan{nullptr};
@@ -94,9 +93,9 @@ template<typename T> void register_benchmark() {
         finufftf_setpts(plan, M, x_p, y_p, z_p, N, s_p, t_p, u_p);
         finufftf_execute(plan, c.data(), fk.data());
         finufftf_destroy(plan);
+        benchmark::ClobberMemory();
       }
       state.SetItemsProcessed(N + M);
-      benchmark::ClobberMemory();
     }
   });
 }
@@ -104,7 +103,7 @@ template<typename T> void register_benchmark() {
 int main(int argc, char **argv) {
   benchmark::Initialize(&argc, argv);
   register_benchmark<double>();
-  register_benchmark<float>();
+  // register_benchmark<float>();
   benchmark::RunSpecifiedBenchmarks();
   benchmark::Shutdown();
 }
