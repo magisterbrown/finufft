@@ -104,7 +104,7 @@ template<typename T> void register_benchmark() {
 int main(int argc, char **argv) {
   benchmark::Initialize(&argc, argv);
   register_benchmark<double>();
-  // register_benchmark<float>();
+  register_benchmark<float>();
   benchmark::RunSpecifiedBenchmarks();
   benchmark::Shutdown();
 }
