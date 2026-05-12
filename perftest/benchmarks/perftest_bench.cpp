@@ -13,6 +13,7 @@
 
 static const double PI = 3.141592653589793238462643383279502884;
 static const auto BENCH_NAME = "perftest/benchmarks/test_benchmark::FINUFFT (";
+
 template<typename T> void register_benchmark() {
   std::stringstream benchmark_name;
   benchmark_name << BENCH_NAME << typeid(T).name() << ")";
