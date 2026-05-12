@@ -18,9 +18,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Cpp
-        uses: aminya/setup-cpp@v1
+        uses: aminya/setup-cpp@1f17f92d6a52bfcb1a25348e2c526c2e5cbb1134 # v1.8.0
         with:
-          compiler: gcc-15
           cmake: true
           ninja: true
 
