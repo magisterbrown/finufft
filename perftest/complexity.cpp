@@ -19,6 +19,7 @@ static const auto BENCH_NAME = "perftest/benchmarks/test_benchmark::FINUFFT";
 
 vector<double> complexity;
 int ct = 0;
+int spreadinterp = 0;
 
 class ComplexityReporter : public benchmark::BenchmarkReporter {
 public:
@@ -100,7 +101,7 @@ void register_benchmark(int M_max, int N_max, int n_samples, double sigma) {
         T *u_p = type == 3 && dim == 3 ? u.data() : nullptr;
         finufft_opts opts;
         finufft_default_opts(&opts);
-        opts.spreadinterponly = 1;
+        opts.spreadinterponly = spreadinterp;
         opts.upsampfac = sigma;
         opts.nthreads  = 1;
         opts.showwarn  = 0;
@@ -147,7 +148,7 @@ int main(int argc, char **argv) {
   }
   benchmark::RunSpecifiedBenchmarks(rp);
   benchmark::Shutdown();
-
+  cout << "Spreadinterponly " << spreadinterp << endl;
   cout << "complexities=[";
   for (auto &comp : complexity) cout << comp << ",";
   cout << "]" << endl;
