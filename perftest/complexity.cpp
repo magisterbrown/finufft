@@ -17,9 +17,23 @@ using namespace std;
 static const double PI       = 3.141592653589793238462643383279502884;
 static const auto BENCH_NAME = "perftest/benchmarks/test_benchmark::FINUFFT";
 
-template<typename T> void register_benchmark(int M_max, int N_max, int n_samples) {
-  int type     = 1;
-  double sigma = 0;
+vector<double> complexity;
+
+class ComplexityReporter : public benchmark::BenchmarkReporter {
+public:
+  bool ReportContext(const Context &context) override { return true; }
+  void ReportRuns(const vector<Run> &reports) override {
+    for (auto &run : reports) {
+      if (run.report_big_o) {
+        complexity.push_back(run.GetAdjustedCPUTime());
+      }
+    }
+  }
+};
+
+template<typename T>
+void register_benchmark(int M_max, int N_max, int n_samples, double sigma) {
+  int type = 1;
   std::stringstream benchmark_name;
   benchmark_name << BENCH_NAME;
   auto *bm =
@@ -84,6 +98,7 @@ template<typename T> void register_benchmark(int M_max, int N_max, int n_samples
         T *u_p = type == 3 && dim == 3 ? u.data() : nullptr;
         finufft_opts opts;
         finufft_default_opts(&opts);
+        opts.spreadinterponly = 1;
         opts.upsampfac = sigma;
         opts.nthreads  = 1;
         opts.showwarn  = 0;
@@ -115,12 +130,26 @@ template<typename T> void register_benchmark(int M_max, int N_max, int n_samples
     int N = pow(10, log_start + i * N_step);
     bm->Args({M, N});
   }
-  bm->Complexity(benchmark::oN);
+  bm->Complexity(benchmark::oNLogN);
 }
 
 int main(int argc, char **argv) {
   benchmark::Initialize(&argc, argv);
-  register_benchmark<float>(10000000, 10000, 7);
-  benchmark::RunSpecifiedBenchmarks();
+  double low_sigma  = 1.25;
+  double high_sigma = 2.0;
+  vector<double> sigmas;
+  auto *rp = new ComplexityReporter();
+  for (double s = low_sigma; s <= high_sigma; s += (high_sigma - low_sigma) / 4) {
+    sigmas.push_back(s);
+    register_benchmark<float>(100, 100, 3, s);
+  }
+  benchmark::RunSpecifiedBenchmarks(rp);
   benchmark::Shutdown();
+
+  cout << "complexities=[";
+  for (auto &comp : complexity) cout << comp << ",";
+  cout << "]" << endl;
+  cout << "sigmas=[";
+  for (auto &s : sigmas) cout << s << ",";
+  cout << "]" << endl;
 }
