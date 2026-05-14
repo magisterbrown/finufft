@@ -18,6 +18,7 @@ static const double PI       = 3.141592653589793238462643383279502884;
 static const auto BENCH_NAME = "perftest/benchmarks/test_benchmark::FINUFFT";
 
 vector<double> complexity;
+int ct = 0;
 
 class ComplexityReporter : public benchmark::BenchmarkReporter {
 public:
@@ -25,6 +26,7 @@ public:
   void ReportRuns(const vector<Run> &reports) override {
     for (auto &run : reports) {
       if (run.report_big_o) {
+        cout << "Rap " << ct++ << endl;
         complexity.push_back(run.GetAdjustedCPUTime());
       }
     }
@@ -139,9 +141,9 @@ int main(int argc, char **argv) {
   double high_sigma = 2.0;
   vector<double> sigmas;
   auto *rp = new ComplexityReporter();
-  for (double s = low_sigma; s <= high_sigma; s += (high_sigma - low_sigma) / 4) {
+  for (double s = low_sigma; s <= high_sigma; s += (high_sigma - low_sigma) / 10) {
     sigmas.push_back(s);
-    register_benchmark<float>(100, 100, 3, s);
+    register_benchmark<float>(10000000, 10000, 14, s);
   }
   benchmark::RunSpecifiedBenchmarks(rp);
   benchmark::Shutdown();
