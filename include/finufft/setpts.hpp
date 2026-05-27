@@ -106,8 +106,11 @@ int FINUFFT_PLAN_T<TF>::setpts(BIGINT nj, const TF *xj, const TF *yj, const TF *
     // based on the actual density nj/N(). Re-plan if density changed significantly.
     if (!upsamp_locked) {
       double density   = double(nj) / double(N());
-      double upsampfac = bestUpsamplingFactor<TF>(opts.nthreads, density, dim, type, m.tol);
-      // Re-plan if this is the first call (upsampfac==0) or if upsampfac changed
+      double upsampfac = bestUpsamplingFactorComplexity<TF>(nj, dim, m.tol, type, mstu);
+
+      // double upsampfac = bestUpsamplingFactor<TF>(opts.nthreads, density, dim, type,
+      // m.tol);
+      //  Re-plan if this is the first call (upsampfac==0) or if upsampfac changed
       if (upsampfac != opts.upsampfac) {
         opts.upsampfac = upsampfac;
         if (opts.debug)

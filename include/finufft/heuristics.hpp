@@ -350,5 +350,26 @@ double bestUpsamplingFactor(const int nthreads, const double density, const int 
 }
 
 } // end namespace finufft::heuristics
-
+template<typename T>
+double bestUpsamplingFactorComplexity(const int nj, const int dim, const double epsilon,
+                                      int type, std::array<long int, 3> &mstu) {
+  double lowest_complexity = std::numeric_limits<double>::infinity();
+  double best_sigma        = 1.25;
+  for (double sigma = 1.25; sigma < 2.0; sigma += 0.05) {
+    finufft_spread_opts opts{.upsampfac = sigma, .kerformula = 0};
+    int nspread   = finufft::kernel::theoretical_kernel_ns(epsilon, dim, type, 0, opts);
+    int grid_size = 1;
+    for (int idim = 0; idim < dim; ++idim) {
+      grid_size *= finufft::utils::next235even(mstu[idim] * sigma);
+    }
+    double spread_complexity = double(nj) * std::pow(nspread, dim);
+    double fft_complexity    = grid_size * std::log(grid_size);
+    double total_complexity  = spread_complexity + fft_complexity;
+    if (total_complexity < lowest_complexity) {
+      lowest_complexity = total_complexity;
+      best_sigma        = sigma;
+    }
+  }
+  return best_sigma;
+}
 #endif // HEURISTICS_HPP
