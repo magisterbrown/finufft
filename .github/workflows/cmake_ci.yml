@@ -108,11 +108,15 @@ jobs:
 
           - { os: windows-2022, toolchain: msvc }
           - { os: windows-2022, toolchain: clang-19 }
+          - { os: windows-2025, toolchain: msvc }
+          - { os: windows-2025, toolchain: clang-19 }
 
           - { os: macos-14, toolchain: llvm }
           - { os: macos-14, toolchain: gcc-14 }
           - { os: macos-15, toolchain: llvm }
           - { os: macos-15, toolchain: gcc-15 }
+          - { os: macos-15-intel, toolchain: llvm }
+          - { os: macos-15-intel, toolchain: gcc-15 }
 
     steps:
       - name: Show CPU info (Linux)
@@ -174,7 +178,8 @@ jobs:
             echo "LIBRARY_PATH=$(brew --prefix libomp)/lib"
             echo "DYLD_LIBRARY_PATH=$(brew --prefix libomp)/lib"
             echo "CMAKE_PREFIX_PATH=$(brew --prefix libomp)"
-            ver="${{ matrix.os }}"; ver="${ver#macos-}"
+            # macos-15-intel etc.: strip both the prefix and any -intel/-large suffix
+            ver="${{ matrix.os }}"; ver="${ver#macos-}"; ver="${ver%-intel}"; ver="${ver%-large}"
             echo "MACOSX_DEPLOYMENT_TARGET=${ver}.0"
           } >> "$GITHUB_ENV"
 
@@ -230,11 +235,9 @@ jobs:
               rm -rf $build_dir
 
               cmake -E make_directory "$build_dir"
-              cmake -S . -B "$build_dir" \
+              cmake --preset dev -B "$build_dir" \
                 -DCMAKE_BUILD_TYPE=$build_type \
                 -DFINUFFT_ARCH_FLAGS="$arch" \
-                -DFINUFFT_BUILD_EXAMPLES=ON \
-                -DFINUFFT_BUILD_TESTS=ON \
                 -DFINUFFT_USE_DUCC0=$ducc_fft \
                 -DFINUFFT_USE_SANITIZERS=OFF \
                 -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded \

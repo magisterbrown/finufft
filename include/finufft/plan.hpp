@@ -18,7 +18,6 @@
 #define FINUFFT_VER "2.6.0-dev"
 
 // Internal (nf1 etc) array allocation size that immediately raises error.
-// (Note: next235 takes 1s for 1e11, so it is also to prevent hang here.)
 // Increase this if you need >10TB (!) RAM...
 inline constexpr BIGINT MAX_NF = BIGINT(1e12);
 
@@ -166,6 +165,7 @@ private:
   int execute_internal(TC *cj, TC *fk, bool adjoint = false, int ntrans_actual = -1,
                        TC *aligned_scratch = nullptr, size_t scratch_size = 0) const;
   void setup_spreadinterp(); // throws FINUFFT_ERR_EPS_TOO_SMALL if tol unachievable
+  void check_sigma();        // throws FINUFFT_ERR_EPS_TOO_SMALL if sigma too low for tol
   void precompute_horner_coeffs();
   void set_nf_type12(BIGINT ms, BIGINT *nf) const;
   void onedim_fseries_kernel(BIGINT nf, std::vector<TF> &fwkerhalf) const;

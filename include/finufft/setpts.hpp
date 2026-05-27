@@ -12,6 +12,29 @@
 #include <finufft/plan.hpp>
 #include <finufft/utils.hpp>
 #include <finufft/heuristics.hpp>
+#include <finufft_common/kernel.h>
+
+// ---------- local helpers for setpts: --------
+
+template<typename TF> void FINUFFT_PLAN_T<TF>::check_sigma() {
+  constexpr double eps_mach = std::numeric_limits<TF>::epsilon();
+  const double gridlen      = *std::max_element(m.nfdim.begin(), m.nfdim.begin() + dim);
+  const double sigma_min =
+      finufft::common::lowest_sigma((double)m.tol, dim, m.spopts.nspread, eps_mach,
+                                    gridlen);
+  const double eps_round  = 0.48 * eps_mach * gridlen;
+  const bool unachievable = (double)m.tol <= eps_round; // MAXSIGMA still not enough
+  if (!unachievable && sigma_min <= m.spopts.upsampfac) return; // fine
+  const double suggest = std::min(sigma_min, finufft::common::MAXSIGMA);
+  const bool do_throw  = !opts.allow_eps_too_small;             // opt-in wins
+  fprintf(stderr, "%s %s: upsampfac=%.3g too low for tol=%.3g; %s\n", __func__,
+          do_throw ? "error" : "warning", m.spopts.upsampfac, (double)m.tol,
+          unachievable
+              ? "rounding floor dominates (eps_round ~= tol); no upsampfac helps"
+              : (opts.allow_eps_too_small ? "suggest upsampfac>=" : "need upsampfac>="));
+  if (!unachievable) fprintf(stderr, "  (%.3g)\n", suggest);
+  if (do_throw) throw finufft::exception(FINUFFT_ERR_EPS_TOO_SMALL);
+}
 
 // ---------- local math routines for type-3 setpts: --------
 
@@ -52,7 +75,7 @@ void FINUFFT_PLAN_T<TF>::set_nhg_type3(int idim, TF S, TF X)
   // catch too small nf, and nan or +-inf, otherwise spread fails...
   if (m.nfdim[idim] < 2 * m.spopts.nspread) m.nfdim[idim] = 2 * m.spopts.nspread;
   if (m.nfdim[idim] < MAX_NF)                     // otherwise will fail
-    m.nfdim[idim] = next235even(m.nfdim[idim]);   // expensive at huge nf
+    m.nfdim[idim] = next235(m.nfdim[idim], 2);
   m.t3P.h[idim]   = TF(2.0 * PI / m.nfdim[idim]); // upsampled grid spacing
   m.t3P.gam[idim] = TF(m.nfdim[idim] / (2.0 * opts.upsampfac * Ssafe)); // x scale fac
 }
@@ -85,7 +108,7 @@ int FINUFFT_PLAN_T<TF>::setpts(BIGINT nj, const TF *xj, const TF *yj, const TF *
     // based on the actual density nj/N(). Re-plan if density changed significantly.
     if (!upsamp_locked) {
       double density   = double(nj) / double(N());
-      double upsampfac = bestUpsamplingFactor<TF>(opts.nthreads, density, dim, type, m.tol);
+      double upsampfac = bestUpsamplingFactorComplexity<TF>(nj, dim, m.tol, type, mstu);
       // Re-plan if this is the first call (upsampfac==0) or if upsampfac changed
       if (upsampfac != opts.upsampfac) {
         opts.upsampfac = upsampfac;
@@ -98,6 +121,8 @@ int FINUFFT_PLAN_T<TF>::setpts(BIGINT nj, const TF *xj, const TF *yj, const TF *
         init_grid_kerFT_FFT();       // throws on error
       }
     }
+
+    check_sigma(); // throws if upsampfac too low for tol (nfdim now known)
 
     m.XYZ   = {xj, yj, zj}; // plan must keep pointers to user's fixed NU pts
     // Invariant: m.padded_ns must equal the runtime mirror of
