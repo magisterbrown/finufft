@@ -6,6 +6,8 @@
 #include <typeinfo>
 
 #include <benchmark/benchmark.h>
+#include <finufft_common/kernel.h>
+
 #include <finufft.h>
 #include <random>
 #ifndef FINUFFT_USE_DUCC0
@@ -85,6 +87,11 @@ void register_benchmark(int type, const long Nd[3], int64_t M, double tol) {
         opts.upsampfac = state.range(0) / 100.0;
         opts.nthreads  = 1;
         opts.showwarn  = 0;
+        finufft_spread_opts inner_opts{.upsampfac = opts.upsampfac, .kerformula = 0};
+        int nspread =
+            finufft::kernel::theoretical_kernel_ns(tol, dim, type, 0, inner_opts);
+        int spread_complexity = M * std::pow(nspread, dim);
+        std::cout << "Spread complexity: " << spread_complexity << std::endl;
 
         for (auto _ : state) {
           if constexpr (std::is_same_v<T, double>) {
