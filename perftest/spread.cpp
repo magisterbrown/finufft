@@ -87,12 +87,12 @@ void register_benchmark(int type, const long Nd[3], int64_t M, double tol) {
         opts.upsampfac = state.range(0) / 100.0;
         opts.nthreads  = 1;
         opts.showwarn  = 0;
+        opts.spreadinterponly = 1;
         finufft_spread_opts inner_opts{.upsampfac = opts.upsampfac, .kerformula = 0};
         int nspread =
             finufft::kernel::theoretical_kernel_ns(tol, dim, type, 0, inner_opts);
         int spread_complexity = M * std::pow(nspread, dim);
-        std::cout << "Spread complexity: " << spread_complexity << std::endl;
-
+        state.SetComplexityN(spread_complexity);
         for (auto _ : state) {
           if constexpr (std::is_same_v<T, double>) {
             finufft_plan_s *plan{nullptr};
@@ -110,16 +110,18 @@ void register_benchmark(int type, const long Nd[3], int64_t M, double tol) {
             benchmark::ClobberMemory();
           }
         }
+
       });
-  for (double i = 125; i <= 200; i += 5) {
+  for (int i = 125; i <= 200; i += 5) {
     bm->Args({i});
   }
+  bm->Complexity(benchmark::oN);
 }
 
 int main(int argc, char **argv) {
   benchmark::Initialize(&argc, argv);
   long Nd[3] = {10000, 1, 1};
-  int64_t M  = 1000000;
+  int64_t M  = 10000;
   double tol = 1e-4;
   register_benchmark<double>(3, Nd, M, tol);
   benchmark::RunSpecifiedBenchmarks();
