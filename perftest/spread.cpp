@@ -121,9 +121,9 @@ void register_benchmark(int type, const long Nd[3], int64_t M, double tol) {
 int main(int argc, char **argv) {
   benchmark::Initialize(&argc, argv);
   long Nd[3] = {10000, 1, 1};
-  int64_t M  = 10000;
+  int64_t M  = 10000000;
   double tol = 1e-4;
-  register_benchmark<double>(3, Nd, M, tol);
+  register_benchmark<double>(1, Nd, M, tol);
   benchmark::RunSpecifiedBenchmarks();
   benchmark::Shutdown();
 }
