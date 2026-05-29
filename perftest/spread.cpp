@@ -15,6 +15,30 @@
 #endif
 static const double PI = 3.141592653589793238462643383279502884;
 
+class SpreadReporter : public benchmark::BenchmarkReporter {
+public:
+  std::vector<double> time;
+  std::vector<double> upsampling_factor;
+  double bigo;
+  bool ReportContext(const Context &context) override {
+    PrintBasicContext(&GetOutputStream(), context);
+    GetOutputStream() << "spread benchmark results\n";
+    return true;
+  }
+
+  void ReportRuns(const std::vector<Run> &reports) override {
+    auto &out = GetOutputStream();
+    for (const auto &run : reports) {
+      if (run.counters.find("upsampfac") != run.counters.end()) {
+        time.push_back(run.GetAdjustedCPUTime());
+        upsampling_factor.push_back(run.counters.at("upsampfac"));
+      } else if (run.benchmark_name().find("BigO") != std::string::npos) {
+        bigo = run.GetAdjustedCPUTime();
+      }
+    }
+  }
+};
+
 template<typename T> struct InputData {
   std::vector<T> x, y, z;
   std::vector<T> s, t, u;
@@ -88,6 +112,7 @@ void register_benchmark(int type, const long Nd[3], int64_t M, double tol) {
         opts.nthreads  = 1;
         opts.showwarn  = 0;
         opts.spreadinterponly = 1;
+        state.counters["upsampfac"] = benchmark::Counter(opts.upsampfac);
         finufft_spread_opts inner_opts{.upsampfac = opts.upsampfac, .kerformula = 0};
         int nspread =
             finufft::kernel::theoretical_kernel_ns(tol, dim, type, 0, inner_opts);
@@ -124,6 +149,22 @@ int main(int argc, char **argv) {
   int64_t M  = 10000000;
   double tol = 1e-4;
   register_benchmark<double>(1, Nd, M, tol);
-  benchmark::RunSpecifiedBenchmarks();
+  SpreadReporter reporter;
+  benchmark::RunSpecifiedBenchmarks(&reporter);
+  std::cout << "time = [";
+  for (size_t i = 0; i < reporter.time.size(); ++i) {
+    if (i > 0) std::cout << ", ";
+    std::cout << reporter.time[i];
+  }
+  std::cout << "]\n";
+
+  std::cout << "upsampling_factor = [";
+  for (size_t i = 0; i < reporter.upsampling_factor.size(); ++i) {
+    if (i > 0) std::cout << ", ";
+    std::cout << reporter.upsampling_factor[i];
+  }
+  std::cout << "]\n";
+
+  std::cout << "bigo = " << reporter.bigo << '\n';
   benchmark::Shutdown();
 }
