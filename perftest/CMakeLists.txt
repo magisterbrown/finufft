@@ -26,3 +26,22 @@ if(HAVE_GETOPT_H)
     endif()
     finufft_link_test(perftest)
 endif()
+
+CPMAddPackage(
+    NAME
+    google_benchmark
+    GIT_REPOSITORY
+    https://github.com/google/benchmark.git
+    GIT_TAG
+    v1.9.5
+    OPTIONS
+    "BENCHMARK_ENABLE_TESTING OFF"
+    "BENCHMARK_ENABLE_INSTALL OFF"
+)
+
+add_executable(spread spread.cpp)
+if(FINUFFT_USE_DUCC0)
+    target_compile_definitions(spread PRIVATE -DFINUFFT_USE_DUCC0)
+endif()
+target_link_libraries(spread PRIVATE benchmark::benchmark)
+finufft_link_test(spread)

@@ -1,0 +1,2 @@
+vim perftest/perftest_pr_head.py --master-perftes ./builds/branches/master/RelWithDebInfo/perftest/perftest --pr-perftest ./builds/branches/sigma-complexity1/RelWithDebInfo/perftest/perftest --plot-output pl.png
+vim perftest/perftest_pr_head.py
