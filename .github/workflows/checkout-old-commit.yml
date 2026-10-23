@@ -1,0 +1,143 @@
+name: checkout tagged commits
+
+on:
+  workflow_dispatch:
+
+jobs:
+  prepare-tags:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.collect.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Collect tags oldest to newest
+        id: collect
+        shell: bash
+        run: |
+          git for-each-ref --sort=creatordate --format='%(refname:short) %(objectname)' "refs/tags/v*" --exclude='refs/tags/*-*'  \
+              | tail -n 1 \
+              | python3 -c 'import json;import sys; print("matrix="+json.dumps({"include": [{"tag": tag, "commit": sha} for tag, sha in [p.split() for p in []]+[("master", "master")]]}))' \
+                >> $GITHUB_OUTPUT
+
+  checkout-tags:
+    runs-on: ubuntu-22.04
+    needs: prepare-tags
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare-tags.outputs.matrix) }}
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout tag commit
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ matrix.commit }}
+          fetch-depth: 1
+
+      - name: Checkout perftest from master
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: perf-push
+          fetch-depth: 1
+          path: _main_ref
+          sparse-checkout: |
+            perftest
+
+      - name: Copy perftest into tag tree
+        run: |
+          mv _main_ref/perftest ./perftest
+          ls perftest
+
+      - name: Create cache directory
+        run: mkdir -p cpm
+
+      - name: Restore Cache
+        id: cpm-cache
+        uses: actions/cache/restore@v4
+        with:
+          key: cpm-cache-00-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}
+          path: cpm
+
+      - name: Restore perftest binary
+        id: perftest-cache
+        uses: actions/cache/restore@v4
+        with:
+          key: perftest-bin-00-${{ matrix.commit }}-${{ hashFiles('perftest/**') }}
+          path: build/perftest/perftest
+
+
+      - name: Setup Cpp
+        uses: aminya/setup-cpp@v1
+        with:
+          cmake: true
+
+      - name: Run test script from main
+        id: run_test
+        run: |
+          if [ "${{ steps.perftest-cache.outputs.cache-hit }}" != "true" ] || [ ! -x build/perftest/perftest ]; then
+            cmake -B build -DFINUFFT_BUILD_TESTS=ON -DCPM_SOURCE_CACHE="cpm"
+            cmake --build build --target perftest -j
+          fi
+          python3 perftest/run_perftest_matrix.py --perftest-bin ./build/perftest/perftest
+
+      - name: Cache dependencies
+        if: steps.cpm-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: cpm-cache-00-${{ hashFiles('**/CMakeLists.txt', 'cmake/**') }}
+          path: cpm
+
+      - name: Cache perftest binary
+        if: steps.perftest-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: perftest-bin-00-${{ matrix.commit }}-${{ hashFiles('perftest/**') }}
+          path: build/perftest/perftest
+
+      - name: Save matrix result
+        if: always()
+        run: |
+          mkdir -p matrix-results
+          {
+            echo "tag: ${{ matrix.tag }}"
+            echo "commit: ${{ matrix.commit }}"
+            echo "result: ${{ steps.run_test.outcome }}"
+          } > "matrix-results/${{ matrix.tag }}.txt"
+
+      - name: Upload matrix result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: matrix-result-${{ matrix.tag }}
+          path: matrix-results/${{ matrix.tag }}.txt
+          if-no-files-found: error
+
+  gather-results:
+    runs-on: ubuntu-22.04
+    needs:
+      - prepare-tags
+      - checkout-tags
+    if: always()
+    steps:
+      - name: Download matrix results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: matrix-result-*
+          path: matrix-results
+          merge-multiple: true
+
+      - name: Summarize matrix results
+        run: |
+          echo "Matrix JSON from prepare-tags:"
+          echo '${{ needs.prepare-tags.outputs.matrix }}'
+          ls -lt matrix-results
